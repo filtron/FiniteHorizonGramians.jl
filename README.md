@@ -54,5 +54,5 @@ G ≈ U' * U # returns true
 ```
 
 ## Related packages 
-* [MatrixEquations.jl](https://github.com/andreasvarga/MatrixEquations.jl) provides an algorithm for computing the Cholesky factor of infinite Horizon Gramians (i.e. solutions to algebraic Lyapunov equations).
+* [MatrixEquations.jl](https://github.com/andreasvarga/MatrixEquations.jl) provides an algorithm for computing the Cholesky factor of infinite horizon Gramians (i.e. solutions to algebraic Lyapunov equations).
 * [ExponentialUtilities.jl](https://github.com/SciML/ExponentialUtilities.jl) provides various algorithms for matrix exponentials and related quantities.
