@@ -1,0 +1,223 @@
+module ErrorAnalysis
+
+using LinearAlgebra, TaylorSeries, Jacobi, NonlinearSolve, PolynomialRoots, TuePlots
+
+"""
+    pade_den(q::Integer, θ)
+
+Computes the Pade denominator.
+"""
+function pade_den(q::Integer, θ)
+    den = sum(0:q) do j
+        binomial(q, j) * factorial(2 * q - j) * (-θ)^j
+    end
+    return den / factorial(2 * q)
+end
+
+"""
+    pade(q::Integer, θ)
+
+Computes the Pade approximation. 
+"""
+function pade(q::Integer, θ)
+    num = pade_den(q, -θ)
+    den = pade_den(q, θ)
+    return num / den
+end
+
+"""
+    pade_analytic_radius(T, q::Integer)
+
+Computes the maximum radius around origin for which the Pade denominator 
+is analytic. 
+"""
+function pade_analytic_radius(T, q::Integer)
+    coeff = map(0:q) do j
+        binomial(q, j) * factorial(2 * q - j) * (-one(T))^j
+    end
+    minimum(abs.(roots(coeff)))
+end
+
+
+"""
+    pade_den_bound(T, q::Integer, order::Integer, θ)
+
+Computes a norm bound for the inverse of the Pade denominator 
+assuming the argument has norm at most θ. 
+"""
+function pade_den_bound(T, q::Integer, order::Integer, θ)
+    dθ = Taylor1(T, order)
+    series = exp(dθ / T(2)) * pade_den(q, dθ) - one(T)
+    coeffs = abs.([getcoeff(series, i) for i = 0:order])
+    bound = Taylor1(coeffs, order)
+    return exp(θ / 2) / (one(T) - bound(θ))
+end
+
+"""
+    BackwardBound{T,A}
+
+Callable struct for computing the backward bound for the matrix exponential. 
+"""
+struct BackwardBound{T,A}
+    f::A
+    function BackwardBound{T}(q::Integer, order::Integer) where {T}
+        dθ = Taylor1(T, order)
+        ρ = exp(-dθ) * pade(q, dθ) - one(T)
+        coeffs = abs.([i < 2 * q + 1 ? zero(T) : getcoeff(ρ, i) for i = 0:order])
+        f = Taylor1(coeffs, order)
+        new{T,typeof(f)}(f)
+    end
+end
+
+function (BWB::BackwardBound{T,A})(θ::T) where {T,A}
+    -log(one(T) - BWB.f(θ)) / θ
+end
+
+
+""""
+    backward_bound_exp(T, qs, order::Integer)
+
+Compute the least norm that guarantees unit roundoff error in 
+the computed matrix exponential. 
+"""
+function backward_bound_exp(T, qs, order::Integer)
+    # twice the result of Higham (2005) is a good upper bound
+    ubs =
+        T.([
+            3.7e-8,
+            5.3e-4,
+            1.5e-2,
+            8.5e-2,
+            2.5e-1,
+            5.4e-1,
+            9.5e-1,
+            1.5e0,
+            2.1e0,
+            2.8e0,
+            3.6e0,
+            4.5e0,
+            5.4e0,
+            6.3e0,
+            7.3e0,
+            8.4e0,
+            9.4e0,
+            1.1e1,
+            1.2e1,
+            1.3e1,
+            1.4e1,
+        ]) * T(2)
+    alg = Bisection()
+    θs = map(zip(qs, ubs)) do (q, ub)
+        bwb = BackwardBound{T}(q, order)
+        fun(θ, p) = bwb(θ) - T(2^(-53))
+        interval = [big(1e-10), ub]
+        prob = IntervalNonlinearProblem(fun, interval)
+        sol = solve(prob, alg)
+        sol.u
+    end
+    return θs
+end
+
+
+"""
+    V(q::Integer, t, θ)
+
+Computes V_q(t, θ)
+"""
+function V(q::Integer, t, θ)
+    θt = θ * t
+    expθt = exp(θt)
+    den = pade_den(q, θ)
+    const_factor = (-1)^q * factorial(q) / factorial(2 * q) / den / expθt
+    v = sum(0:q) do k
+        factor = binomial(q, k) * binomial(q + k, k) * factorial(k) * (-θ)^(q - k)
+        term = sum(0:k) do m
+            θt^m / factorial(m)
+        end
+        factor * (term - expθt)
+    end
+    return v * const_factor
+end
+
+"""
+    legzeros(q::Integer, T)
+
+Computes the zeros of the shifted Legendre polynomials. 
+"""
+function legzeros(q::Integer, T)
+    legzeros = jacobi_zeros(q, zero(T), zero(T))
+    legzeros = (legzeros .+ one(eltype(legzeros))) / eltype(legzeros)(2)
+    return legzeros
+end
+
+struct VBound{T<:Number,C}
+    q::Integer
+    order::Integer
+    series::C
+    function VBound{T}(q::Integer, order::Integer) where {T}
+        zs = legzeros(q, T)
+        push!(zs, one(T))
+        dθ = Taylor1(T, order)
+        series = map(zs) do z
+            te = V(q, z, dθ)
+            coeffs = abs.([i < q + 1 ? zero(T) : getcoeff(te, i) for i = 0:order])
+            Taylor1(coeffs, order)
+        end
+        new{T,typeof(series)}(q, order, series)
+    end
+end
+
+function (VB::VBound{T,C})(θ::T) where {T,C}
+    evals = map(VB.series) do f
+        f(θ)
+    end
+    return maximum(evals)
+end
+
+
+"""
+    backward_bound_gram(order::Integer)
+
+Computes bounds ηs such that the backward error in G is less than unit roundoff in Float64. 
+"""
+function backward_bound_gram(T, qs, order::Integer)
+    # fraction of θs probably good upper bound for ηs 
+    ubs = backward_bound_exp(T, qs, order) / T(2.0)
+    ηs = similar(ubs)
+    T = eltype(ηs)
+    alg = Bisection()
+    ηs = map(zip(qs, ubs)) do (q, ub)
+        vb = VBound{T}(q, order)
+        fun(θ, p) = vb(θ) - T(2^(-53))
+        interval = [big(0.0), ub]
+        prob = IntervalNonlinearProblem(fun, interval)
+        sol = solve(prob, alg)
+        sol.u
+    end
+    return ηs
+end
+
+
+const FIG_DIR = joinpath(@__DIR__, "../../note/figs")
+export FIG_DIR
+
+
+const STANDARD_WIDTH_PT = 424.06033
+
+function standard_setting()
+    width_pt = STANDARD_WIDTH_PT
+    width_in = width_pt / TuePlots.POINTS_PER_INCH
+
+    setting = TuePlots.TuePlotsSetting(
+        width = width_in,
+        width_half = 0.5 * width_in,
+        base_fontsize = 11,
+        font = "San Serif",
+    )
+    return setting
+end
+
+export standard_setting
+
+
+end

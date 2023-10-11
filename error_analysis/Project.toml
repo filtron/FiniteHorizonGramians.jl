@@ -1,0 +1,9 @@
+[deps]
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+Jacobi = "83f21c0b-4282-5fbc-9e3f-f6da3d2e584c"
+LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
+MakieCore = "20f20a25-4f0e-4fdf-b5d1-57303727442b"
+NonlinearSolve = "8913a72c-1f9b-4ce2-8d82-65094dcecaec"
+PolynomialRoots = "3a141323-8675-5d76-9d11-e1df1406c778"
+TaylorSeries = "6aa5eb33-94cf-58f4-a9d0-e4b2c4fc25ea"
+TuePlots = "7dc86ad5-723e-4492-bd0d-d0b58009a4c8"
