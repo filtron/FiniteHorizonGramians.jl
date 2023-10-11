@@ -20,8 +20,9 @@
 A = [0.0 0.0; 1.0 0.0]
 B = [1.0; 0.0;;]
 
-expA, U = exp_and_gram_chol(A, B)
-_, G = exp_and_gram(A, B)
+method = AdaptiveExpAndGram{Float64}()
+expA, U = exp_and_gram_chol(A, B, method)
+_, G = exp_and_gram(A, B, method)
 
 G ≈ U' * U # returns true 
 ```
