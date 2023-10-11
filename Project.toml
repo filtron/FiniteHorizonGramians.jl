@@ -1,10 +1,11 @@
 name = "FiniteHorizonGramians"
-uuid = "c6e433de-f42a-4c21-b5ac-e7bc929bdc49"
-authors = ["Filip Tronarp <filip.tronarp@matstat.lu.se> and contributors"]
-version = "1.0.0-DEV"
+uuid = "b59a298d-d283-4a37-9369-85a9f9a111a5"
+authors = ["Filip Tronarp <filip.tronarp@matstat.lu.se>", "Tony Stillfjord <tony.stillfjord@matstat.lu.se>"]
+version = "0.1.0"
 
-[compat]
-julia = "1.9"
+[deps]
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+PrecompileTools = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
