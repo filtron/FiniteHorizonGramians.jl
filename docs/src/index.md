@@ -9,6 +9,3 @@ Documentation for [FiniteHorizonGramians](https://github.com/filtron/FiniteHoriz
 ```@index
 ```
 
-```@autodocs
-Modules = [FiniteHorizonGramians]
-```
