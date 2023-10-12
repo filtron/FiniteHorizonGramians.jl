@@ -8,6 +8,7 @@ Constructor:
 ExpAndGram{T,N}()
 
 creates an algorithm with coefficients stored in the numeric type T of order N. 
+Current supported values of N are 3, 5, 7, 9, 13. 
 
 """
 struct ExpAndGram{T,N,A,B,C} <: AbstractExpAndGramAlgorithm where {T,N,A,B,C}
