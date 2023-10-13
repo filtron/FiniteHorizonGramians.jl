@@ -1,13 +1,13 @@
 # activates the script environment and instantiates it 
 import Pkg
 Base.active_project() != joinpath(@__DIR__, "Project.toml") && Pkg.activate(@__DIR__)
-haskey(Pkg.project().dependencies, "SSXtras") ||
+haskey(Pkg.project().dependencies, "FiniteHorizonGramians") ||
     Pkg.develop(path = joinpath(@__DIR__, "../"))
 isfile(joinpath(@__DIR__, "Manifest.toml")) && Pkg.resolve()
 Pkg.instantiate()
 
 includet("ExperimentUtilities.jl")
-using SSXtras, .ExperimentUtilities
+using FiniteHorizonGramians, .ExperimentUtilities
 using BenchmarkTools
 
 λ = 1e-0
