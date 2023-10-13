@@ -13,8 +13,9 @@ function main()
     T = BigFloat
     qs = big.(1:21)
     order = 150
+    ngrid = 2^7
     θs = ErrorAnalysis.backward_bound_exp(T, qs, order)
-    ηs = ErrorAnalysis.backward_bound_gram(T, qs, order)
+    ηs = ErrorAnalysis.backward_bound_gram(T, qs, order, ngrid)
     νs = ErrorAnalysis.pade_analytic_radius.(T, qs)
     ξs = map(zip(qs, θs)) do (q, θ)
         ErrorAnalysis.pade_den_bound(T, q, order, θ)
