@@ -211,9 +211,14 @@ export MatrixDepotPathological
 export LaguerreExperiment
 export run_experiment
 
-const FIG_DIR = joinpath(@__DIR__, "../../note/figs")
-export FIG_DIR
 
+figdir = joinpath(@__DIR__, "../../note/figs")
+if isdir(figdir)
+    const FIG_DIR = joinpath(@__DIR__, "../../note/figs")
+else
+    const FIG_DIR = @__DIR__
+end
+export FIG_DIR
 
 const STANDARD_WIDTH_PT = 424.06033
 

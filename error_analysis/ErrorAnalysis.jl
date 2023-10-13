@@ -154,12 +154,20 @@ struct VBound{T<:Number,C}
     q::Integer
     order::Integer
     series::C
-    function VBound{T}(q::Integer, order::Integer) where {T}
+    function VBound{T}(q::Integer, order::Integer, ngrid::Integer) where {T}
         zs = legzeros(q, T)
-        push!(zs, one(T))
+
+        # create dense grid including Legendre zeros 
+        # ngrid might have to be at least 2 for this to not break... 
+        end_points = zs
+        pushfirst!(end_points, zero(T))
+        push!(end_points, one(T))
+        intervals = zip(end_points[begin:end-1], end_points[begin+1:end])
+        time_points = mapreduce(x -> LinRange(first(x), last(x), ngrid), vcat, intervals) |> unique 
+
         dθ = Taylor1(T, order)
-        series = map(zs) do z
-            te = V(q, z, dθ)
+        series = map(time_points) do tp
+            te = V(q, tp, dθ)
             coeffs = abs.([i < q + 1 ? zero(T) : getcoeff(te, i) for i = 0:order])
             Taylor1(coeffs, order)
         end
@@ -180,14 +188,14 @@ end
 
 Computes bounds ηs such that the backward error in G is less than unit roundoff in Float64. 
 """
-function backward_bound_gram(T, qs, order::Integer)
+function backward_bound_gram(T, qs, order::Integer, ngrid::Integer)
     # fraction of θs probably good upper bound for ηs 
     ubs = backward_bound_exp(T, qs, order) / T(2.0)
     ηs = similar(ubs)
     T = eltype(ηs)
     alg = Bisection()
     ηs = map(zip(qs, ubs)) do (q, ub)
-        vb = VBound{T}(q, order)
+        vb = VBound{T}(q, order, ngrid)
         fun(θ, p) = vb(θ) - T(2^(-53))
         interval = [big(0.0), ub]
         prob = IntervalNonlinearProblem(fun, interval)
@@ -197,8 +205,12 @@ function backward_bound_gram(T, qs, order::Integer)
     return ηs
 end
 
-
-const FIG_DIR = joinpath(@__DIR__, "../../note/figs")
+figdir = joinpath(@__DIR__, "../../note/figs")
+if isdir(figdir)
+    const FIG_DIR = joinpath(@__DIR__, "../../note/figs")
+else
+    const FIG_DIR = @__DIR__
+end
 export FIG_DIR
 
 
