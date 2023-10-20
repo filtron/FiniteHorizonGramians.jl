@@ -26,12 +26,11 @@ function main()
         for q in qs
             pade_num, leg_nums, sqr_norms = compute_coefficient_table(z, q) 
 
-            maxnum = pade_num[1] # biggest coefficient 
-            pade_num = pade_num / maxnum 
-            leg_nums = leg_nums / maxnum 
+            pade_num = pade_num  
+            leg_nums = leg_nums  
 
             # compute gram coeffs 
-            gram_coeffs = copy(leg_nums)
+            gram_coeffs = Float64.(leg_nums)
             for row in axes(gram_coeffs, 1)
                 gram_coeffs[row, :] .= gram_coeffs[row, :] / sqrt(sqr_norms[row])
             end
