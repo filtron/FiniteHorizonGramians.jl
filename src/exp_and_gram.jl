@@ -73,16 +73,6 @@ function exp_and_gram_chol!(
 end
 
 
-function _gram_coeffs(method::ExpAndGram)
-    (; pade_num, leg_nums, sqr_norms) = method
-    gram_coeffs = copy(leg_nums)
-    for row in axes(gram_coeffs, 1)
-        gram_coeffs[row, :] .= gram_coeffs[row, :] / sqrt(sqr_norms[row])
-    end
-    return gram_coeffs
-end
-
-
 function _exp_and_gram_double(Φ0, U0, s)
     Φ = Φ0
     m, n = size(U0)
