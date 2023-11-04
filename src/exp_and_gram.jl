@@ -89,7 +89,7 @@ function exp_and_gram_chol!(
 
     # should pre-allocate here
     if s > 0
-        Φ, U = _exp_and_gram_double(Φ, U, si, cache)
+        Φ, U = _exp_and_gram_double!(Φ, U, si, cache)
     end
 
     triu2cholesky_factor!(U)
@@ -98,17 +98,15 @@ end
 
 
 # Note to self: This overwrites Φ0 but not U0
-prealloc_exp_and_gram_double(Φ, U0) = begin
-    m, n = size(U0)
-    return (U = similar(Φ),
-            pre_array = similar(Φ, 2n, n),
-            tmp = similar(Φ))
-end
-function _exp_and_gram_double!(Φ0, U0, s, cache=prealloc_exp_and_gram_double(Φ0, U0))
-    @unpack U, pre_array, tmp = cache
-
+function _exp_and_gram_double!(Φ0, U0, s, cache=nothing)
     Φ = Φ0
     m, n = size(U0)
+
+    if cache == nothing
+        cache = (U = similar(Φ0), pre_array = similar(Φ0, 2n, n), tmp = similar(Φ0))
+    end
+    @unpack U, pre_array, tmp = cache
+
     U[1:m, 1:n] .= U0
 
     for _ = 1:s
