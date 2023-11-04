@@ -41,12 +41,14 @@ exp_and_gram_chol(
     A::AbstractMatrix{T},
     B::AbstractMatrix{T},
     method::ExpAndGram{T},
-) where {T<:Number} = exp_and_gram_chol!(copy(A), copy(B), method)
+    cache=alloc_mem(A, B, method),
+) where {T<:Number} = exp_and_gram_chol!(copy(A), copy(B), method, cache)
 
 function exp_and_gram_chol!(
     A::AbstractMatrix{T},
     B::AbstractMatrix{T},
     method::ExpAndGram{T,q},
+    cache=alloc_mem(A, B, method)
 ) where {T<:Number,q}
 
     n, m = _dims_if_compatible(A::AbstractMatrix, B::AbstractMatrix) # first checks that (A, B) have compatible dimensions
@@ -61,7 +63,7 @@ function exp_and_gram_chol!(
         B ./= convert(T, sqrt(2^si))
     end
 
-    Φ, U = _exp_and_gram_chol_init(A, B, method)
+    Φ, U = _exp_and_gram_chol_init(A, B, method, cache)
 
     # should pre-allocate here
     if s > 0
@@ -106,6 +108,7 @@ function _exp_and_gram_chol_init(
     A::AbstractMatrix{T},
     B::AbstractMatrix{T},
     method::ExpAndGram{T,q},
+    cache=alloc_mem(A, B, method),
 ) where {T,q}
 
     n, m = _dims_if_compatible(A::AbstractMatrix, B::AbstractMatrix) # first checks that (A, B) have compatible dimensions
@@ -174,6 +177,7 @@ function _exp_and_gram_chol_init(
     return expA, U
 end
 
+alloc_mem(A, B, method::ExpAndGram{T,q}) where {T,q} = nothing
 function alloc_mem(A, B, method::ExpAndGram{T,13}) where {T}
     q = 13
     n, m = size(B)
