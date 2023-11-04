@@ -67,7 +67,7 @@ function exp_and_gram_chol!(
 
     # should pre-allocate here
     if s > 0
-        Φ, U = _exp_and_gram_double(Φ, U, si)
+        Φ, U = _exp_and_gram_double(Φ, U, si, cache)
     end
 
     triu2cholesky_factor!(U)
@@ -75,14 +75,20 @@ function exp_and_gram_chol!(
 end
 
 
-function _exp_and_gram_double(Φ0, U0, s)
+# Note to self: This overwrites Φ0 but not U0
+prealloc_exp_and_gram_double(Φ, U0) = begin
+    m, n = size(U0)
+    return (U = similar(Φ),
+            pre_array = similar(Φ, 2n, n),
+            tmp = similar(Φ))
+end
+function _exp_and_gram_double!(Φ0, U0, s, cache=prealloc_exp_and_gram_double(Φ0, U0))
+    @unpack U, pre_array, tmp = cache
+
     Φ = Φ0
     m, n = size(U0)
-    U = similar(Φ)
     U[1:m, 1:n] .= U0
 
-    pre_array = similar(Φ, 2n, n)
-    tmp = similar(Φ)
     for _ = 1:s
         sub_array = view(pre_array, 1:2m, 1:n)
         mul!(view(sub_array, 1:m, 1:n), view(U, 1:m, 1:n), Φ')
@@ -193,6 +199,9 @@ function alloc_mem(A, B, method::ExpAndGram{T,13}) where {T}
         A2B = similar(B),
         A4B = similar(B),
         A6B = similar(B),
+        U = similar(A),
+        pre_array = similar(A, 2n, n),
+        tmp = similar(A),
     )
 end
 
