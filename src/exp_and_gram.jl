@@ -174,12 +174,31 @@ function _exp_and_gram_chol_init(
     return expA, U
 end
 
+function alloc_mem(A, B, method::ExpAndGram{T,13}) where {T}
+    q = 13
+    n, m = size(B)
+    return (
+        A2 = similar(A),
+        A4 = similar(A),
+        A6 = similar(A),
+        tmpA1 = similar(A),
+        tmpA2 = similar(A),
+        tmpA3 = similar(A),
+        L = similar(A, n, m * (q + 1)),
+        tmpB2 = similar(B),
+        A2B = similar(B),
+        A4B = similar(B),
+        A6B = similar(B),
+    )
+end
 
 function _exp_and_gram_chol_init(
     A::AbstractMatrix{T},
     B::AbstractMatrix{T},
     method::ExpAndGram{T,13},
+    cache=alloc_mem(A, B, method),
 ) where {T}
+    @unpack A2, A4, A6, tmpA1, tmpA2, tmpA3, L, tmpB2, A2B, A4B, A6B = cache
 
     n, m = size(B)
     n == LinearAlgebra.checksquare(A) || throw(
@@ -193,10 +212,9 @@ function _exp_and_gram_chol_init(
     gram_coeffs = method.gram_coeffs
     q = 13
 
-    A2 = A * A
-    A4 = A2 * A2
-    A6 = A2 * A4
-    tmpA1, tmpA2 = similar(A6), similar(A6)
+    mul!(A2, A, A)
+    mul!(A4, A2, A2)
+    mul!(A6, A2, A4)
 
     @. tmpA1 = pade_num[14] * A6 + pade_num[12] * A4 + pade_num[10] * A2
     @. tmpA2 = pade_num[8] * A6 + pade_num[6] * A4 + pade_num[4] * A2
@@ -204,26 +222,19 @@ function _exp_and_gram_chol_init(
     U = mul!(tmpA2, A6, tmpA1, true, true)
     U = mul!(tmpA1, A, U) # U is odd terms
 
-    #tmpA1 = A # not good
-    tmpA1 = similar(A6) # quick fix
-
-    @. tmpA1 = pade_num[13] * A6 + pade_num[11] * A4 + pade_num[9] * A2
+    @. tmpA3 = pade_num[13] * A6 + pade_num[11] * A4 + pade_num[9] * A2
     @. tmpA2 = pade_num[7] * A6 + pade_num[5] * A4 + pade_num[3] * A2
     mul!(tmpA2, true, pade_num[1] * I, true, true)
-    V = mul!(tmpA2, A6, tmpA1, true, true) # V is even terms
+    V = mul!(tmpA2, A6, tmpA3, true, true) # V is even terms
 
-    @. tmpA1 = V + U # numerator
+    @. tmpA3 = V + U # numerator
     @. tmpA2 = V - U  # denominator
-    num = tmpA1
+    num = tmpA3
     den = tmpA2
 
-    L = similar(A, n, m * (q + 1))
-
-    A2B = A2 * B
-    A4B = A4 * B
-    A6B = A6 * B
-
-    tmpB2 = similar(B)
+    mul!(A2B, A2, B)
+    mul!(A4B, A4, B)
+    mul!(A6B, A6, B)
 
     # L0
     L0 = view(L, 1:n, 1:m)

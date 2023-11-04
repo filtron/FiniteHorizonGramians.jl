@@ -2,6 +2,7 @@ module FiniteHorizonGramians
 
 using LinearAlgebra
 using PrecompileTools
+using SimpleUnPack
 
 include("utils.jl")
 
