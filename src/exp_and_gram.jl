@@ -37,6 +37,28 @@ function exp_and_gram!(
     return Φ, G
 end
 
+alloc_mem(A, B, method::ExpAndGram{T,q}) where {T,q} = nothing
+function alloc_mem(A, B, method::ExpAndGram{T,13}) where {T}
+    q = 13
+    n, m = size(B)
+    return (
+        A2 = similar(A),
+        A4 = similar(A),
+        A6 = similar(A),
+        tmpA1 = similar(A),
+        tmpA2 = similar(A),
+        tmpA3 = similar(A),
+        L = similar(A, n, m * (q + 1)),
+        tmpB2 = similar(B),
+        A2B = similar(B),
+        A4B = similar(B),
+        A6B = similar(B),
+        U = similar(A),
+        pre_array = similar(A, 2n, n),
+        tmp = similar(A),
+    )
+end
+
 exp_and_gram_chol(
     A::AbstractMatrix{T},
     B::AbstractMatrix{T},
@@ -181,28 +203,6 @@ function _exp_and_gram_chol_init(
     U = qr!(L').R # right Cholesky factor of the Grammian (may not be square!!)
     U = triu2cholesky_factor!(U)
     return expA, U
-end
-
-alloc_mem(A, B, method::ExpAndGram{T,q}) where {T,q} = nothing
-function alloc_mem(A, B, method::ExpAndGram{T,13}) where {T}
-    q = 13
-    n, m = size(B)
-    return (
-        A2 = similar(A),
-        A4 = similar(A),
-        A6 = similar(A),
-        tmpA1 = similar(A),
-        tmpA2 = similar(A),
-        tmpA3 = similar(A),
-        L = similar(A, n, m * (q + 1)),
-        tmpB2 = similar(B),
-        A2B = similar(B),
-        A4B = similar(B),
-        A6B = similar(B),
-        U = similar(A),
-        pre_array = similar(A, 2n, n),
-        tmp = similar(A),
-    )
 end
 
 function _exp_and_gram_chol_init(
