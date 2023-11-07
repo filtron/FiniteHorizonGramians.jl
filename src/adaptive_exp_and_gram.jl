@@ -39,6 +39,7 @@ function adaptive_to_alg(A, B, method::AdaptiveExpAndGram)
 end
 
 alloc_mem(A, B, method::AdaptiveExpAndGram) = alloc_mem(A, B, adaptive_to_alg(A, B, method))
+
 function exp_and_gram_chol!(
     eA::AbstractMatrix,
     U::AbstractMatrix,
