@@ -155,10 +155,10 @@ end
 
 
 """
-    _exp_and_gram_chol_init(A::AbstractMatrix{T}, B::AbstractMatrix{T}, L::LegendreExp{T})
+    _exp_and_gram_chol_init!(eA, U, A, B, t, method::ExpAndGram{T,q}, cache = alloc_mem(A, B, method))
 
-Computes the matrix exponential exp(A) and the controllability Grammian ∫_0^1 exp(A*t)*B*B'*exp(A'*t) dt,
-using a Legendre expansion of the matrix exponential.
+Computes the matrix exponential exp(A*t) and the controllability Grammian ∫_0^1 t*exp(A*t)*B*B'*exp(A'*t) dt
+and stores them in `eA` and `U`.
 """
 function _exp_and_gram_chol_init!(
     eA::AbstractMatrix{T},
