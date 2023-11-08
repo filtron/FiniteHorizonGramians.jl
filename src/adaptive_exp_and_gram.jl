@@ -49,18 +49,24 @@ function exp_and_gram_chol!(
     method::AdaptiveExpAndGram,
     cache=alloc_mem(A, B, method)
 )
+    At, Bt = if cache == nothing
+        (copy(A) * t, copy(B) * sqrt(t))
+    else
+        (mul!(cache._A, A, t), mul!(cache._B, B, sqrt(t)))
+    end
+
     n, _ = _dims_if_compatible(A::AbstractMatrix, B::AbstractMatrix)
 
     methods = method.methods
-    normA = opnorm(A, 1)
+    normAt = opnorm(At, 1)
 
-    if normA <= methods[1].normtol && n <= 4
+    if normAt <= methods[1].normtol && n <= 4
         Φ, U = _exp_and_gram_chol_init!(eA, U, A, B, t, methods[1], cache)
-    elseif normA <= methods[2].normtol && n <= 6
+    elseif normAt <= methods[2].normtol && n <= 6
         Φ, U = _exp_and_gram_chol_init!(eA, U, A, B, t, methods[2], cache)
-    elseif normA <= methods[3].normtol && n <= 8
+    elseif normAt <= methods[3].normtol && n <= 8
         Φ, U = _exp_and_gram_chol_init!(eA, U, A, B, t, methods[3], cache)
-    elseif normA <= methods[4].normtol && n <= 10
+    elseif normAt <= methods[4].normtol && n <= 10
         Φ, U = _exp_and_gram_chol_init!(eA, U, A, B, t, methods[4], cache)
     else
         Φ, U = exp_and_gram_chol!(eA, U, A, B, t, methods[5], cache)
