@@ -20,25 +20,7 @@ struct AdaptiveExpAndGram{T,A} <: AbstractExpAndGramAlgorithm where {A}
     end
 end
 
-
-function adaptive_to_alg(A, B, method::AdaptiveExpAndGram)
-    n, _ = _dims_if_compatible(A, B)
-    methods = method.methods
-    normA = opnorm(A, 1)
-    if normA <= methods[1].normtol && n <= 4
-        return methods[1]
-    elseif normA <= methods[2].normtol && n <= 6
-        return methods[2]
-    elseif normA <= methods[3].normtol && n <= 8
-        return methods[3]
-    elseif normA <= methods[4].normtol && n <= 10
-        return methods[4]
-    else
-        return methods[5]
-    end
-end
-
-alloc_mem(A, B, method::AdaptiveExpAndGram) = alloc_mem(A, B, adaptive_to_alg(A, B, method))
+alloc_mem(A, B, method::AdaptiveExpAndGram) = nothing
 
 function exp_and_gram_chol!(
     eA::AbstractMatrix,
@@ -47,29 +29,25 @@ function exp_and_gram_chol!(
     B::AbstractMatrix,
     t::Real,
     method::AdaptiveExpAndGram,
-    cache=alloc_mem(A, B, method)
+    cache::Nothing=nothing,
 )
-    At, Bt = if cache == nothing
-        (copy(A) * t, copy(B) * sqrt(t))
-    else
-        (mul!(cache._A, A, t), mul!(cache._B, B, sqrt(t)))
-    end
+    At, Bt = copy(A) * t, copy(B) * sqrt(t)
 
-    n, _ = _dims_if_compatible(A::AbstractMatrix, B::AbstractMatrix)
+    n, _ = _dims_if_compatible(At, Bt)
 
     methods = method.methods
     normAt = opnorm(At, 1)
 
     if normAt <= methods[1].normtol && n <= 4
-        Φ, U = _exp_and_gram_chol_init!(eA, U, A, B, t, methods[1], cache)
+        Φ, U = _exp_and_gram_chol_init!(eA, U, A, B, t, methods[1])
     elseif normAt <= methods[2].normtol && n <= 6
-        Φ, U = _exp_and_gram_chol_init!(eA, U, A, B, t, methods[2], cache)
+        Φ, U = _exp_and_gram_chol_init!(eA, U, A, B, t, methods[2])
     elseif normAt <= methods[3].normtol && n <= 8
-        Φ, U = _exp_and_gram_chol_init!(eA, U, A, B, t, methods[3], cache)
+        Φ, U = _exp_and_gram_chol_init!(eA, U, A, B, t, methods[3])
     elseif normAt <= methods[4].normtol && n <= 10
-        Φ, U = _exp_and_gram_chol_init!(eA, U, A, B, t, methods[4], cache)
+        Φ, U = _exp_and_gram_chol_init!(eA, U, A, B, t, methods[4])
     else
-        Φ, U = exp_and_gram_chol!(eA, U, A, B, t, methods[5], cache)
+        Φ, U = exp_and_gram_chol!(eA, U, A, B, t, methods[5])
     end
 
     return Φ, U
