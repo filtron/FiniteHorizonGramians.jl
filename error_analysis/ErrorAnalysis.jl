@@ -163,7 +163,8 @@ struct VBound{T<:Number,C}
         pushfirst!(end_points, zero(T))
         push!(end_points, one(T))
         intervals = zip(end_points[begin:end-1], end_points[begin+1:end])
-        time_points = mapreduce(x -> LinRange(first(x), last(x), ngrid), vcat, intervals) |> unique 
+        time_points =
+            mapreduce(x -> LinRange(first(x), last(x), ngrid), vcat, intervals) |> unique
 
         dθ = Taylor1(T, order)
         series = map(time_points) do tp

@@ -23,7 +23,7 @@ Compute the matrix exponential exp(A) and a upper triangular Cholesky factor of 
 """
 function exp_and_gram_chol end
 
-export exp_and_gram, exp_and_gram_chol
+export exp_and_gram, exp_and_gram!, exp_and_gram_chol, exp_and_gram_chol!
 
 include("exp_and_gram.jl")
 include("adaptive_exp_and_gram.jl")

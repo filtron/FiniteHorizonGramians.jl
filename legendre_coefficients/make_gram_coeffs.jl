@@ -24,10 +24,10 @@ function main()
         @variables z
         qs = big.([3, 5, 7, 9, 13])
         for q in qs
-            pade_num, leg_nums, sqr_norms = compute_coefficient_table(z, q) 
+            pade_num, leg_nums, sqr_norms = compute_coefficient_table(z, q)
 
-            pade_num = pade_num  
-            leg_nums = leg_nums  
+            pade_num = pade_num
+            leg_nums = leg_nums
 
             # compute gram coeffs 
             gram_coeffs = Float64.(leg_nums)
