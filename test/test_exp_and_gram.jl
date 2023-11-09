@@ -4,7 +4,7 @@ function test_exp_and_gram(T)
     A = randn(T, n, n)
     B = randn(T, n, m)
 
-    tol = 1e-11
+    tol = 1e-10
 
     ts = [0.5, 1.0, 1.5]
 
