@@ -5,8 +5,12 @@ function integrator2AB(T, ndiff)
     return A, B
 end
 
+function integrator_exp_and_gram_chol(T, t, ndiff)
+
+end
+
 function integrator_exp_and_gram_chol(T, ndiff)
-    # transition matrix 
+    # transition matrix
     irange = collect(0:ndiff)
     g = @. exp(-logfactorial(irange))
     Φ = zeros(T, ndiff + one(ndiff), ndiff + one(ndiff))
@@ -16,7 +20,7 @@ function integrator_exp_and_gram_chol(T, ndiff)
         end
     end
 
-    # cholesky factor 
+    # cholesky factor
     L = zeros(T, ndiff + one(ndiff), ndiff + one(ndiff))
     @simd ivdep for n = 0:ndiff
         something = logfactorial(n)

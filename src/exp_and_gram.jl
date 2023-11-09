@@ -20,60 +20,145 @@ end
 function exp_and_gram(
     A::AbstractMatrix{T},
     B::AbstractMatrix{T},
-    method::ExpAndGram,
+    method::AbstractExpAndGramAlgorithm,
 ) where {T<:Number}
-    Φ, G = exp_and_gram!(copy(A), copy(B), method)
-    return Φ, G
+    return exp_and_gram(copy(A), copy(B), true, method)
+end
+
+function exp_and_gram(
+    A::AbstractMatrix{T},
+    B::AbstractMatrix{T},
+    t::Number,
+    method::AbstractExpAndGramAlgorithm,
+) where {T<:Number}
+    return exp_and_gram!(similar(A), similar(A), copy(A), copy(B), t, method)
 end
 
 function exp_and_gram!(
+    eA::AbstractMatrix{T},
+    U::AbstractMatrix{T},
     A::AbstractMatrix{T},
     B::AbstractMatrix{T},
-    method::ExpAndGram,
+    method::AbstractExpAndGramAlgorithm,
+    cache = nothing
 ) where {T<:Number}
-    Φ, U = exp_and_gram_chol!(A, B, method)
+    Φ, U = exp_and_gram_chol!(eA, U, A, B, method)
     G = U' * U
     _symmetrize!(G)
     return Φ, G
 end
 
+function exp_and_gram!(
+    eA::AbstractMatrix{T},
+    U::AbstractMatrix{T},
+    A::AbstractMatrix{T},
+    B::AbstractMatrix{T},
+    t::Number,
+    method::AbstractExpAndGramAlgorithm,
+    cache = nothing
+) where {T<:Number}
+    Φ, U = exp_and_gram_chol!(eA, U, A, B, t, method)
+    G = U' * U
+    _symmetrize!(G)
+    return Φ, G
+end
+
+
+
 exp_and_gram_chol(
     A::AbstractMatrix{T},
     B::AbstractMatrix{T},
-    method::ExpAndGram{T},
-) where {T<:Number} = exp_and_gram_chol!(copy(A), copy(B), method)
+    method::AbstractExpAndGramAlgorithm,
+    cache = nothing,
+) where {T<:Number} = exp_and_gram_chol!(similar(A), similar(A), copy(A), copy(B), method, cache)
 
-function exp_and_gram_chol!(
+exp_and_gram_chol(
     A::AbstractMatrix{T},
     B::AbstractMatrix{T},
+    t::Number,
+    method::AbstractExpAndGramAlgorithm,
+    cache = nothing,
+) where {T<:Number} = exp_and_gram_chol!(similar(A), similar(A), copy(A), copy(B), t, method, cache)
+
+
+"""
+exp_and_gram_chol!(
+    eA::AbstractMatrix{T},
+    U::AbstractMatrix{T},
+    A::AbstractMatrix{T},
+    B::AbstractMatrix{T},
+    method::AbstractExpAndGramAlgorithm,
+    cache = nothing,
+)
+
+Computes the matrix exponential of A * t and the controllability Gramian of (A, B) on the interval [0, 1].
+The result is stored in (eA, _U), which are returned.
+"""
+function exp_and_gram_chol!(
+    eA::AbstractMatrix{T},
+    U::AbstractMatrix{T},
+    A::AbstractMatrix{T},
+    B::AbstractMatrix{T},
+    method::AbstractExpAndGramAlgorithm,
+    cache = nothing,
+) where {T<:Number}
+    return exp_and_gram_chol!(eA, U, A, B, true, method, cache)
+end
+
+"""
+exp_and_gram_chol!(
+    eA::AbstractMatrix{T},
+    _U::AbstractMatrix{T},
+    A::AbstractMatrix{T},
+    B::AbstractMatrix{T},
+    t::Number,
     method::ExpAndGram{T,q},
+    cache = nothing,
+)
+
+Computes the matrix exponential of A * t and the controllability Gramian of (A, B) on the interval [0, t].
+The result is stored in (eA, _U), which are returned.
+"""
+function exp_and_gram_chol!(
+    eA::AbstractMatrix{T},
+    _U::AbstractMatrix{T},
+    A::AbstractMatrix{T},
+    B::AbstractMatrix{T},
+    t::Number,
+    method::ExpAndGram{T,q},
+    cache = nothing,
 ) where {T<:Number,q}
 
+    At = A * t
+    Bt = B * sqrt(t)
+
     n, m = _dims_if_compatible(A::AbstractMatrix, B::AbstractMatrix) # first checks that (A, B) have compatible dimensions
-    normA = opnorm(A, 1)
+    normA = opnorm(At, 1)
     sexp = log2(normA / method.normtol) # power required for accuracy of exp
     sgram = n <= q + 1 ? 0 : ceil(Int, log2((n - 1) / q)) # power requried for rank equivalence
     s = max(sexp, sgram)
 
     if s > 0
         si = ceil(Int, s)
-        A ./= convert(T, 2^si) # this mutates A
-        B ./= convert(T, sqrt(2^si))
+        At ./= convert(T, 2^si)
+        Bt ./= convert(T, sqrt(2^si))
     end
 
-    Φ, U = _exp_and_gram_chol_init(A, B, method)
+    Φ, U = _exp_and_gram_chol_init!(eA, _U, At, Bt, method, cache)
 
     # should pre-allocate here
     if s > 0
-        Φ, U = _exp_and_gram_double(Φ, U, si)
+        Φ, U = _exp_and_gram_double!(Φ, U, si, cache)
     end
 
     triu2cholesky_factor!(U)
-    return Φ, U
+    copy!(eA, Φ)
+    copy!(_U, U)
+    return Φ, _U
 end
 
 
-function _exp_and_gram_double(Φ0, U0, s)
+function _exp_and_gram_double!(Φ0, U0, s, cache)
     Φ = Φ0
     m, n = size(U0)
     U = similar(Φ)
@@ -102,10 +187,13 @@ end
 Computes the matrix exponential exp(A) and the controllability Grammian ∫_0^1 exp(A*t)*B*B'*exp(A'*t) dt,
 using a Legendre expansion of the matrix exponential.
 """
-function _exp_and_gram_chol_init(
+function _exp_and_gram_chol_init!(
+    eA::AbstractMatrix{T},
+    U::AbstractMatrix{T},
     A::AbstractMatrix{T},
     B::AbstractMatrix{T},
     method::ExpAndGram{T,q},
+    cache = nothing,
 ) where {T,q}
 
     n, m = _dims_if_compatible(A::AbstractMatrix, B::AbstractMatrix) # first checks that (A, B) have compatible dimensions
@@ -175,10 +263,13 @@ function _exp_and_gram_chol_init(
 end
 
 
-function _exp_and_gram_chol_init(
+function _exp_and_gram_chol_init!(
+    eA::AbstractMatrix{T},
+    U::AbstractMatrix{T},
     A::AbstractMatrix{T},
     B::AbstractMatrix{T},
     method::ExpAndGram{T,13},
+    cache = nothing,
 ) where {T}
 
     n, m = size(B)
@@ -341,11 +432,7 @@ function ExpAndGram{T,3}() where {T}
         0.0 0.0 0.0 0.37796447300922725
     ]
     normtol = T(0.00067)
-    ExpAndGram{T,3,typeof(pade_num),typeof(gramcs)}(
-        pade_num,
-        gramcs,
-        normtol,
-    )
+    ExpAndGram{T,3,typeof(pade_num),typeof(gramcs)}(pade_num, gramcs, normtol)
 end
 
 function ExpAndGram{T,5}() where {T}
@@ -359,11 +446,7 @@ function ExpAndGram{T,5}() where {T}
         0.0 0.0 0.0 0.0 0.0 0.30151134457776363
     ]
     normtol = T(0.021)
-    ExpAndGram{T,5,typeof(pade_num),typeof(gramcs)}(
-        pade_num,
-        gramcs,
-        normtol,
-    )
+    ExpAndGram{T,5,typeof(pade_num),typeof(gramcs)}(pade_num, gramcs, normtol)
 end
 
 function ExpAndGram{T,7}() where {T}
@@ -379,11 +462,7 @@ function ExpAndGram{T,7}() where {T}
         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.25819888974716115
     ]
     normtol = T(0.13)
-    ExpAndGram{T,7,typeof(pade_num),typeof(gramcs)}(
-        pade_num,
-        gramcs,
-        normtol,
-    )
+    ExpAndGram{T,7,typeof(pade_num),typeof(gramcs)}(pade_num, gramcs, normtol)
 end
 
 function ExpAndGram{T,9}() where {T}
@@ -412,11 +491,7 @@ function ExpAndGram{T,9}() where {T}
         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.22941573387056177
     ]
     normtol = T(0.41)
-    ExpAndGram{T,9,typeof(pade_num),typeof(gramcs)}(
-        pade_num,
-        gramcs,
-        normtol,
-    )
+    ExpAndGram{T,9,typeof(pade_num),typeof(gramcs)}(pade_num, gramcs, normtol)
 end
 
 function ExpAndGram{T,13}() where {T}
@@ -453,9 +528,5 @@ function ExpAndGram{T,13}() where {T}
         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.19245008972987526
     ]
     normtol = T(1.57)
-    ExpAndGram{T,13,typeof(pade_num),typeof(gramcs)}(
-        pade_num,
-        gramcs,
-        normtol,
-    )
+    ExpAndGram{T,13,typeof(pade_num),typeof(gramcs)}(pade_num, gramcs, normtol)
 end

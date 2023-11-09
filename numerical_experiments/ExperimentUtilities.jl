@@ -1,7 +1,12 @@
 module ExperimentUtilities
 
 using LinearAlgebra,
-    Random, SpecialFunctions, ExponentialUtilities, MatrixDepot, FiniteHorizonGramians, TuePlots
+    Random,
+    SpecialFunctions,
+    ExponentialUtilities,
+    MatrixDepot,
+    FiniteHorizonGramians,
+    TuePlots
 
 import FiniteHorizonGramians as FHG
 
