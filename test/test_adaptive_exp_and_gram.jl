@@ -24,11 +24,11 @@ function test_adaptive_exp_and_gram(T)
     @test isapprox(err(G, Ggt), zero(T), atol = tol)
 
     # make sure to trigger all branches
-    A = tril(ones(T, n, n))/n
+    A = tril(ones(T, n, n)) / n
     B = ones(T, n, 1)
 
     normtols = T[0.00067, 0.021, 0.13, 0.41, 1.57]
-    scalings = vcat(normtols/2, T(2))
+    scalings = vcat(normtols / 2, T(2))
     for s in scalings
         As = A * s
         Bs = B * sqrt(s)

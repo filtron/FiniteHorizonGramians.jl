@@ -40,7 +40,7 @@ function exp_and_gram!(
     A::AbstractMatrix{T},
     B::AbstractMatrix{T},
     method::AbstractExpAndGramAlgorithm,
-    cache = nothing
+    cache = nothing,
 ) where {T<:Number}
     Φ, U = exp_and_gram_chol!(eA, U, A, B, method)
     G = U' * U
@@ -55,7 +55,7 @@ function exp_and_gram!(
     B::AbstractMatrix{T},
     t::Number,
     method::AbstractExpAndGramAlgorithm,
-    cache = nothing
+    cache = nothing,
 ) where {T<:Number}
     Φ, U = exp_and_gram_chol!(eA, U, A, B, t, method)
     G = U' * U
@@ -70,7 +70,8 @@ exp_and_gram_chol(
     B::AbstractMatrix{T},
     method::AbstractExpAndGramAlgorithm,
     cache = nothing,
-) where {T<:Number} = exp_and_gram_chol!(similar(A), similar(A), copy(A), copy(B), method, cache)
+) where {T<:Number} =
+    exp_and_gram_chol!(similar(A), similar(A), copy(A), copy(B), method, cache)
 
 exp_and_gram_chol(
     A::AbstractMatrix{T},
@@ -78,7 +79,8 @@ exp_and_gram_chol(
     t::Number,
     method::AbstractExpAndGramAlgorithm,
     cache = nothing,
-) where {T<:Number} = exp_and_gram_chol!(similar(A), similar(A), copy(A), copy(B), t, method, cache)
+) where {T<:Number} =
+    exp_and_gram_chol!(similar(A), similar(A), copy(A), copy(B), t, method, cache)
 
 
 """
@@ -111,9 +113,9 @@ exp_and_gram_chol!(
     _U::AbstractMatrix{T},
     A::AbstractMatrix{T},
     B::AbstractMatrix{T},
-    t::Number,
+    [t::Number],
     method::ExpAndGram{T,q},
-    cache = nothing,
+    [cache = nothing],
 )
 
 Computes the matrix exponential of A * t and the controllability Gramian of (A, B) on the interval [0, t].

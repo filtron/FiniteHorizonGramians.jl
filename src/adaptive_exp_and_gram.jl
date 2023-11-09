@@ -28,7 +28,7 @@ function exp_and_gram_chol!(
     B::AbstractMatrix{T},
     t::Number,
     method::AdaptiveExpAndGram,
-    cache=nothing,
+    cache = nothing,
 ) where {T<:Number}
     n, _ = _dims_if_compatible(A::AbstractMatrix, B::AbstractMatrix)
 

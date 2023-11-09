@@ -6,7 +6,7 @@ function integrator2AB(T, ndiff)
 end
 
 
-integrator_exp_and_gram_chol(T, ndiff) =  integrator_exp_and_gram_chol(T, true, ndiff)
+integrator_exp_and_gram_chol(T, ndiff) = integrator_exp_and_gram_chol(T, true, ndiff)
 
 function integrator_exp_and_gram_chol(T, t, ndiff)
     # transition matrix
