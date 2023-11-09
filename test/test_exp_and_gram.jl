@@ -16,7 +16,7 @@ function test_exp_and_gram(T)
 
         err(G1, G2) = opnorm(G1 - G2, 1) / opnorm(G2, 1)
 
-        @testset "$(method)" begin
+        @testset "$(method) | exp_and_gram" begin
             for t in ts
                 Φgt, Ggt = mf_exp_and_gram(A, B, t)
                 Φ, G = exp_and_gram(A, B, t, method)
@@ -25,6 +25,22 @@ function test_exp_and_gram(T)
             end
             Φgt, Ggt = mf_exp_and_gram(A, B)
             Φ, G = exp_and_gram(A, B, method)
+            @test isapprox(err(G, Ggt), zero(T), atol = tol)
+        end
+
+        @testset "$(method) | exp_and_gram_chol" begin
+            for t in ts
+                Φgt, Ggt = mf_exp_and_gram(A, B, t)
+                Φ, U = exp_and_gram_chol(A, B, t, method)
+                G = U'*U
+                FHG._symmetrize!(G)
+                @test isapprox(err(Φ, Φgt), zero(T), atol = tol)
+                @test isapprox(err(G, Ggt), zero(T), atol = tol)
+            end
+            Φgt, Ggt = mf_exp_and_gram(A, B)
+            Φ, U = exp_and_gram_chol(A, B, method)
+            G = U'*U
+            FHG._symmetrize!(G)
             @test isapprox(err(G, Ggt), zero(T), atol = tol)
         end
 
