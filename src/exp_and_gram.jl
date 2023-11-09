@@ -22,7 +22,7 @@ function exp_and_gram(
     B::AbstractMatrix{T},
     method::AbstractExpAndGramAlgorithm,
 ) where {T<:Number}
-    return exp_and_gram(copy(A), copy(B), true, method)
+    return exp_and_gram!(similar(A), similar(A), copy(A), copy(B), method)
 end
 
 function exp_and_gram(
