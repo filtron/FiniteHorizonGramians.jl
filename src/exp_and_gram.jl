@@ -316,7 +316,8 @@ function _exp_and_gram_chol_init!(
     _U = triu2cholesky_factor!(_U)
 
     copy!(eA, expA)
-    copy!(U, _U)
+    U .= 0
+    copy!(view(U, 1:size(_U, 1), 1:size(_U, 2)), _U)
     return eA, U
 end
 
@@ -470,7 +471,8 @@ function _exp_and_gram_chol_init!(
     _U = triu2cholesky_factor!(_U)
 
     copy!(eA, expA)
-    copy!(U, _U)
+    U .= 0
+    copy!(view(U, 1:size(_U, 1), 1:size(_U, 2)), _U)
     return eA, U
 end
 
