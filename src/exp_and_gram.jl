@@ -74,7 +74,7 @@ function exp_and_gram!(
     method::AbstractExpAndGramAlgorithm,
     cache = alloc_mem(A, B, method),
 ) where {T<:Number}
-    Φ, U = exp_and_gram_chol!(eA, U, A, B, method)
+    Φ, U = exp_and_gram_chol!(eA, U, A, B, method, cache)
     G = U' * U
     _symmetrize!(G)
     return Φ, G
@@ -89,7 +89,7 @@ function exp_and_gram!(
     method::AbstractExpAndGramAlgorithm,
     cache = alloc_mem(A, B, method),
 ) where {T<:Number}
-    Φ, U = exp_and_gram_chol!(eA, U, A, B, t, method)
+    Φ, U = exp_and_gram_chol!(eA, U, A, B, t, method, cache)
     G = U' * U
     _symmetrize!(G)
     return Φ, G
@@ -101,18 +101,16 @@ exp_and_gram_chol(
     A::AbstractMatrix{T},
     B::AbstractMatrix{T},
     method::AbstractExpAndGramAlgorithm,
-    cache = alloc_mem(A, B, method),
 ) where {T<:Number} =
-    exp_and_gram_chol!(similar(A), similar(A), copy(A), copy(B), method, cache)
+    exp_and_gram_chol!(similar(A), similar(A), copy(A), copy(B), method)
 
 exp_and_gram_chol(
     A::AbstractMatrix{T},
     B::AbstractMatrix{T},
     t::Number,
     method::AbstractExpAndGramAlgorithm,
-    cache = alloc_mem(A, B, method),
 ) where {T<:Number} =
-    exp_and_gram_chol!(similar(A), similar(A), copy(A), copy(B), t, method, cache)
+    exp_and_gram_chol!(similar(A), similar(A), copy(A), copy(B), t, method)
 
 
 """
