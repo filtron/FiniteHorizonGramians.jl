@@ -160,9 +160,11 @@ function exp_and_gram_chol!(
     method::ExpAndGram{T,q},
     cache = alloc_mem(A, B, method),
 ) where {T<:Number,q}
-
-    At = A * t
-    Bt = B * sqrt(t)
+    At, Bt = if cache == nothing
+        (A * t, B * sqrt(t))
+    else
+        (mul!(cache._A, A, t), mul!(cache._B, B, sqrt(t)))
+    end
 
     n, m = _dims_if_compatible(A::AbstractMatrix, B::AbstractMatrix) # first checks that (A, B) have compatible dimensions
     normA = opnorm(At, 1)
