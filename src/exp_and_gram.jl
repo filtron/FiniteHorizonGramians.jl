@@ -86,7 +86,8 @@ function exp_and_gram!(
     cache = alloc_mem(A, B, method),
 ) where {T<:Number}
     Φ, U = exp_and_gram_chol!(eA, U, A, B, method, cache)
-    G = U' * U
+    G = isnothing(cache) ? copy(U) : cache.U
+    mul!(G, U', U)
     _symmetrize!(G)
     return Φ, G
 end
@@ -101,7 +102,8 @@ function exp_and_gram!(
     cache = alloc_mem(A, B, method),
 ) where {T<:Number}
     Φ, U = exp_and_gram_chol!(eA, U, A, B, t, method, cache)
-    G = U' * U
+    G = isnothing(cache) ? copy(U) : cache.U
+    mul!(G, U', U)
     _symmetrize!(G)
     return Φ, G
 end
