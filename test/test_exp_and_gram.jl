@@ -44,6 +44,15 @@ function test_exp_and_gram(T)
             @test isapprox(err(G, Ggt), zero(T), atol = tol)
         end
 
+        @testset "$(method) | on-square initial Gramian" begin  
+            # test covering the case when initial cholesky factor is non-square
+            m = 1 
+            n = m * (q + 2) 
+            A = - tril(ones(n, n))
+            B = ones(n, m)
+            @test_nowarn exp_and_gram_chol(A, B, method)
+        end
+
     end
 
 end

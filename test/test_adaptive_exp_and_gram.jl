@@ -38,4 +38,12 @@ function test_adaptive_exp_and_gram(T)
         @test isapprox(err(G, Ggt), zero(T), atol = tol)
     end
 
+    # test covering the case when initial cholesky factor is non-square
+    q = 13
+    m = 1 
+    n = m * (q + 2) 
+    A = - tril(ones(n, n))
+    B = ones(n, m)
+    @test_nowarn exp_and_gram(A, B, method)
+
 end
