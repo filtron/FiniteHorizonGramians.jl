@@ -36,12 +36,14 @@ end
 
 function alloc_mem(A, B, method::ExpAndGram{T,q}) where {T,q}
     n, m = size(B)
-    # return (
-    #     U = similar(A),
-    #     pre_array = similar(A, 2n, n),
-    #     tmp = similar(A),
-    # )
-    return nothing
+    return (
+        U = similar(A),
+        pre_array = similar(A, 2n, n),
+        tmp = similar(A),
+        _A = similar(A),
+        _B = similar(B),
+        A2 = similar(A),
+    )
 end
 function alloc_mem(A, B, method::ExpAndGram{T,13}) where {T}
     q = 13
@@ -193,13 +195,15 @@ end
 
 
 function _exp_and_gram_double!(Φ0, U0, s, cache)
-    Φ = Φ0
     m, n = size(U0)
-    U = similar(Φ)
+    if cache == nothing
+        cache = (U = similar(Φ0), pre_array = similar(Φ0, 2n, n), tmp = similar(Φ0))
+    end
+    @unpack U, pre_array, tmp = cache
+
+    Φ = Φ0
     U[1:m, 1:n] .= U0
 
-    pre_array = similar(Φ, 2n, n)
-    tmp = similar(Φ)
     for _ = 1:s
         sub_array = view(pre_array, 1:2m, 1:n)
         mul!(view(sub_array, 1:m, 1:n), view(U, 1:m, 1:n), Φ')
