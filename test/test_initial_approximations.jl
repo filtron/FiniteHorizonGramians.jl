@@ -12,8 +12,10 @@ function test_initial_approximation(T)
                 for ndiff = 1:deg
                     A, B = integrator2AB(T, ndiff)
                     Φgt, Ugt = integrator_exp_and_gram_chol(T, ndiff)
-                    Φ, U =
-                        FHG._exp_and_gram_chol_init!(similar(A), similar(A), A, B, method)
+                    Φ, U = similar(A), similar(U)
+                    _Φ, _U = FHG._exp_and_gram_chol_init!(Φ, U, A, B, method)
+                    @test Φ ≈ _Φ
+                    @test U ≈ _U
 
                     @test Φ ≈ Φgt
                     @test Ugt ≈ U

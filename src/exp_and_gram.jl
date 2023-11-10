@@ -34,6 +34,38 @@ function exp_and_gram(
     return exp_and_gram!(similar(A), similar(A), copy(A), copy(B), t, method)
 end
 
+function alloc_mem(A, B, method::ExpAndGram{T,q}) where {T,q}
+    n, m = size(B)
+    # return (
+    #     U = similar(A),
+    #     pre_array = similar(A, 2n, n),
+    #     tmp = similar(A),
+    # )
+    return nothing
+end
+function alloc_mem(A, B, method::ExpAndGram{T,13}) where {T}
+    q = 13
+    n, m = size(B)
+    return (
+        _A = similar(A),
+        _B = similar(B),
+        A2 = similar(A),
+        A4 = similar(A),
+        A6 = similar(A),
+        tmpA1 = similar(A),
+        tmpA2 = similar(A),
+        tmpA3 = similar(A),
+        L = similar(A, n, m * (q + 1)),
+        tmpB2 = similar(B),
+        A2B = similar(B),
+        A4B = similar(B),
+        A6B = similar(B),
+        U = similar(A),
+        pre_array = similar(A, 2n, n),
+        tmp = similar(A),
+    )
+end
+
 function exp_and_gram!(
     eA::AbstractMatrix{T},
     U::AbstractMatrix{T},
