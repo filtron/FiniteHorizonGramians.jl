@@ -207,7 +207,7 @@ function _exp_and_gram_double!(Φ0, U0, s, cache)
     for _ = 1:s
         sub_array = view(pre_array, 1:2m, 1:n)
         mul!(view(sub_array, 1:m, 1:n), view(U, 1:m, 1:n), Φ')
-        sub_array[m+1:2m, 1:n] .= U[1:m, 1:n]
+        sub_array[m+1:2m, 1:n] .= @view U[1:m, 1:n]
         m = min(n, 2 * m) # new row-size of U
         U[1:m, 1:n] .= qr!(sub_array).R
 
