@@ -36,13 +36,22 @@ end
 
 function alloc_mem(A, B, method::ExpAndGram{T,q}) where {T,q}
     n, m = size(B)
+    ncoeffhalf = div(q + 1, 2)
     return (
         U = similar(A),
         pre_array = similar(A, 2n, n),
         tmp = similar(A),
         _A = similar(A),
         _B = similar(B),
+        P = similar(A),
         A2 = similar(A),
+        odd = similar(A),
+        even = similar(A),
+        tmpA1 = similar(A),
+        tmpA2 = similar(A),
+        tmpA3 = similar(A),
+        L = zeros(eltype(A), n, m * (q + 1)),
+        Loddtmp = similar(B, n, m*ncoeffhalf),
     )
 end
 function alloc_mem(A, B, method::ExpAndGram{T,13}) where {T}
@@ -233,6 +242,7 @@ function _exp_and_gram_chol_init!(
     method::ExpAndGram{T,q},
     cache = alloc_mem(A, B, method),
 ) where {T,q}
+    @unpack P, A2, L, tmpA1, tmpA2, tmpA3, odd, even, Loddtmp = cache
 
     n, m = _dims_if_compatible(A::AbstractMatrix, B::AbstractMatrix) # first checks that (A, B) have compatible dimensions
     isodd(q) || throw(DomainError(q, "The degree $(q) must be odd")) # code heavily assumes odd degree expansion
@@ -242,13 +252,17 @@ function _exp_and_gram_chol_init!(
     gram_coeffs = method.gram_coeffs
     ncoeffhalf = div(q + 1, 2)
 
-    A2 = A * A
-    P = A2
+    mul!(A2, A, A)
+    copy!(P, A2)
 
-    odd = mul!(pade_num[4] * P, true, pade_num[2] * I, true, true) # odd part of the pade numerator
-    even = mul!(pade_num[3] * P, true, pade_num[1] * I, true, true) # even part of the pade numerator
+    # odd = pade_num[2] * I + pade_num[4] * P
+    mul!(odd, pade_num[2], I)
+    mul!(odd, pade_num[4], P, true, true)
+    # even = pade_num[1] * I + pade_num[3] * P
+    mul!(even, pade_num[1], I)
+    mul!(even, pade_num[3], P, true, true)
 
-    L = zeros(T, n, m * (q + 1)) # left square-root of the Grammian
+
     Leven = view(L, :, 1:m*ncoeffhalf)
     Lodd = view(L, :, m*ncoeffhalf+1:m*2*ncoeffhalf)
 
@@ -271,7 +285,8 @@ function _exp_and_gram_chol_init!(
     mul!(L3, P, B, gram_coeffs[4, 4], true)
 
     for k = 2:(div(length(pade_num), 2)-1)
-        P *= A2
+        mul!(tmpA1, P, A2)
+        copy!(P, tmpA1)
         mul!(even, pade_num[2k+1], P, true, true)
         mul!(odd, pade_num[2k+2], P, true, true)
 
@@ -284,11 +299,11 @@ function _exp_and_gram_chol_init!(
         end
     end
 
-    odd = A * odd
-    den = even - odd # pade denominator
-    num = even + odd # pade numerator
+    odd = mul!(tmpA1, A, odd)
+    den = tmpA2 .= even .- odd # pade denominator
+    num = tmpA3 .= even .+ odd # pade numerator
 
-    Lodd .= A * Lodd
+    Lodd .= mul!(Loddtmp, A, Lodd) # writes into L as Lodd and L share memory
 
     F = lu!(den)
     expA = num
