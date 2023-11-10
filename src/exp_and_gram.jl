@@ -142,7 +142,7 @@ end
 """
 exp_and_gram_chol!(
     eA::AbstractMatrix{T},
-    _U::AbstractMatrix{T},
+    U::AbstractMatrix{T},
     A::AbstractMatrix{T},
     B::AbstractMatrix{T},
     [t::Number],
@@ -151,11 +151,11 @@ exp_and_gram_chol!(
 )
 
 Computes the matrix exponential of A * t and the controllability Gramian of (A, B) on the interval [0, t].
-The result is stored in (eA, _U), which are returned.
+The result is stored in (eA, U), which are returned.
 """
 function exp_and_gram_chol!(
     eA::AbstractMatrix{T},
-    _U::AbstractMatrix{T},
+    U::AbstractMatrix{T},
     A::AbstractMatrix{T},
     B::AbstractMatrix{T},
     t::Number,
@@ -178,17 +178,17 @@ function exp_and_gram_chol!(
         Bt ./= convert(T, sqrt(2^si))
     end
 
-    Φ, U = _exp_and_gram_chol_init!(eA, _U, At, Bt, method, cache)
+    Φ, _U = _exp_and_gram_chol_init!(eA, U, At, Bt, method, cache)
 
     # should pre-allocate here
     if s > 0
-        Φ, U = _exp_and_gram_double!(Φ, U, si, cache)
+        Φ, _U = _exp_and_gram_double!(Φ, _U, si, cache)
     end
 
-    triu2cholesky_factor!(U)
+    triu2cholesky_factor!(_U)
     copy!(eA, Φ)
-    copy!(_U, U)
-    return Φ, _U
+    copy!(U, _U)
+    return Φ, U
 end
 
 
@@ -291,9 +291,12 @@ function _exp_and_gram_chol_init!(
     ldiv!(F, expA)
     ldiv!(F, L)
 
-    U = qr!(L').R # right Cholesky factor of the Grammian (may not be square!!)
-    U = triu2cholesky_factor!(U)
-    return expA, U
+    _U = qr!(L').R # right Cholesky factor of the Grammian (may not be square!!)
+    _U = triu2cholesky_factor!(_U)
+
+    copy!(eA, expA)
+    copy!(U, _U)
+    return eA, U
 end
 
 
@@ -326,16 +329,16 @@ function _exp_and_gram_chol_init!(
     @. tmpA1 = pade_num[14] * A6 + pade_num[12] * A4 + pade_num[10] * A2
     @. tmpA2 = pade_num[8] * A6 + pade_num[6] * A4 + pade_num[4] * A2
     mul!(tmpA2, true, pade_num[2] * I, true, true)
-    U = mul!(tmpA2, A6, tmpA1, true, true)
-    U = mul!(tmpA1, A, U) # U is odd terms
+    _U = mul!(tmpA2, A6, tmpA1, true, true)
+    _U = mul!(tmpA1, A, _U) # _U is odd terms
 
     @. tmpA3 = pade_num[13] * A6 + pade_num[11] * A4 + pade_num[9] * A2
     @. tmpA2 = pade_num[7] * A6 + pade_num[5] * A4 + pade_num[3] * A2
     mul!(tmpA2, true, pade_num[1] * I, true, true)
     V = mul!(tmpA2, A6, tmpA3, true, true) # V is even terms
 
-    @. tmpA3 = V + U # numerator
-    @. tmpA2 = V - U  # denominator
+    @. tmpA3 = V + _U # numerator
+    @. tmpA2 = V - _U # denominator
     num = tmpA3
     den = tmpA2
 
