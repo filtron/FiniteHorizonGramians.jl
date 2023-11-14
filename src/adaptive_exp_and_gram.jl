@@ -21,6 +21,8 @@ function AdaptiveExpAndGram{T}() where {T}
     return AdaptiveExpAndGram{T,typeof(methods)}(methods)
 end
 
+alloc_mem(A, B, method::AdaptiveExpAndGram) = nothing
+
 function exp_and_gram_chol!(
     eA::AbstractMatrix{T},
     _U::AbstractMatrix{T},

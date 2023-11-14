@@ -34,16 +34,60 @@ function exp_and_gram(
     return exp_and_gram!(similar(A), similar(A), copy(A), copy(B), t, method)
 end
 
+function alloc_mem(A, B, method::ExpAndGram{T,q}) where {T,q}
+    n, m = size(B)
+    ncoeffhalf = div(q + 1, 2)
+    return (
+        U = similar(A),
+        pre_array = similar(A, 2n, n),
+        tmp = similar(A),
+        _A = similar(A),
+        _B = similar(B),
+        P = similar(A),
+        A2 = similar(A),
+        odd = similar(A),
+        even = similar(A),
+        tmpA1 = similar(A),
+        tmpA2 = similar(A),
+        tmpA3 = similar(A),
+        L = zeros(eltype(A), n, m * (q + 1)),
+        Loddtmp = similar(B, n, m*ncoeffhalf),
+    )
+end
+function alloc_mem(A, B, method::ExpAndGram{T,13}) where {T}
+    q = 13
+    n, m = size(B)
+    return (
+        _A = similar(A),
+        _B = similar(B),
+        A2 = similar(A),
+        A4 = similar(A),
+        A6 = similar(A),
+        tmpA1 = similar(A),
+        tmpA2 = similar(A),
+        tmpA3 = similar(A),
+        L = similar(A, n, m * (q + 1)),
+        tmpB2 = similar(B),
+        A2B = similar(B),
+        A4B = similar(B),
+        A6B = similar(B),
+        U = similar(A),
+        pre_array = similar(A, 2n, n),
+        tmp = similar(A),
+    )
+end
+
 function exp_and_gram!(
     eA::AbstractMatrix{T},
     U::AbstractMatrix{T},
     A::AbstractMatrix{T},
     B::AbstractMatrix{T},
     method::AbstractExpAndGramAlgorithm,
-    cache = nothing,
+    cache = alloc_mem(A, B, method),
 ) where {T<:Number}
-    Φ, U = exp_and_gram_chol!(eA, U, A, B, method)
-    G = U' * U
+    Φ, U = exp_and_gram_chol!(eA, U, A, B, method, cache)
+    G = isnothing(cache) ? copy(U) : cache.U
+    mul!(G, U', U)
     _symmetrize!(G)
     return Φ, G
 end
@@ -55,10 +99,11 @@ function exp_and_gram!(
     B::AbstractMatrix{T},
     t::Number,
     method::AbstractExpAndGramAlgorithm,
-    cache = nothing,
+    cache = alloc_mem(A, B, method),
 ) where {T<:Number}
-    Φ, U = exp_and_gram_chol!(eA, U, A, B, t, method)
-    G = U' * U
+    Φ, U = exp_and_gram_chol!(eA, U, A, B, t, method, cache)
+    G = isnothing(cache) ? copy(U) : cache.U
+    mul!(G, U', U)
     _symmetrize!(G)
     return Φ, G
 end
@@ -69,18 +114,16 @@ exp_and_gram_chol(
     A::AbstractMatrix{T},
     B::AbstractMatrix{T},
     method::AbstractExpAndGramAlgorithm,
-    cache = nothing,
 ) where {T<:Number} =
-    exp_and_gram_chol!(similar(A), similar(A), copy(A), copy(B), method, cache)
+    exp_and_gram_chol!(similar(A), similar(A), copy(A), copy(B), method)
 
 exp_and_gram_chol(
     A::AbstractMatrix{T},
     B::AbstractMatrix{T},
     t::Number,
     method::AbstractExpAndGramAlgorithm,
-    cache = nothing,
 ) where {T<:Number} =
-    exp_and_gram_chol!(similar(A), similar(A), copy(A), copy(B), t, method, cache)
+    exp_and_gram_chol!(similar(A), similar(A), copy(A), copy(B), t, method)
 
 
 """
@@ -90,7 +133,7 @@ exp_and_gram_chol!(
     A::AbstractMatrix{T},
     B::AbstractMatrix{T},
     method::AbstractExpAndGramAlgorithm,
-    cache = nothing,
+    cache = alloc_mem(A, B, method),
 )
 
 Computes the matrix exponential of A * t and the controllability Gramian of (A, B) on the interval [0, 1].
@@ -102,7 +145,7 @@ function exp_and_gram_chol!(
     A::AbstractMatrix{T},
     B::AbstractMatrix{T},
     method::AbstractExpAndGramAlgorithm,
-    cache = nothing,
+    cache = alloc_mem(A, B, method),
 ) where {T<:Number}
     return exp_and_gram_chol!(eA, U, A, B, true, method, cache)
 end
@@ -110,29 +153,31 @@ end
 """
 exp_and_gram_chol!(
     eA::AbstractMatrix{T},
-    _U::AbstractMatrix{T},
+    U::AbstractMatrix{T},
     A::AbstractMatrix{T},
     B::AbstractMatrix{T},
     [t::Number],
     method::ExpAndGram{T,q},
-    [cache = nothing],
+    [cache = alloc_mem(A, B, method)],
 )
 
 Computes the matrix exponential of A * t and the controllability Gramian of (A, B) on the interval [0, t].
-The result is stored in (eA, _U), which are returned.
+The result is stored in (eA, U), which are returned.
 """
 function exp_and_gram_chol!(
     eA::AbstractMatrix{T},
-    _U::AbstractMatrix{T},
+    U::AbstractMatrix{T},
     A::AbstractMatrix{T},
     B::AbstractMatrix{T},
     t::Number,
     method::ExpAndGram{T,q},
-    cache = nothing,
+    cache = alloc_mem(A, B, method),
 ) where {T<:Number,q}
-
-    At = A * t
-    Bt = B * sqrt(t)
+    At, Bt = if cache == nothing
+        (A * t, B * sqrt(t))
+    else
+        (mul!(cache._A, A, t), mul!(cache._B, B, sqrt(t)))
+    end
 
     n, m = _dims_if_compatible(A::AbstractMatrix, B::AbstractMatrix) # first checks that (A, B) have compatible dimensions
     normA = opnorm(At, 1)
@@ -146,32 +191,34 @@ function exp_and_gram_chol!(
         Bt ./= convert(T, sqrt(2^si))
     end
 
-    Φ, U = _exp_and_gram_chol_init!(eA, _U, At, Bt, method, cache)
+    Φ, _U = _exp_and_gram_chol_init!(eA, U, At, Bt, method, cache)
 
     # should pre-allocate here
     if s > 0
-        Φ, U = _exp_and_gram_double!(Φ, U, si, cache)
+        Φ, _U = _exp_and_gram_double!(Φ, _U, si, cache)
     end
 
-    triu2cholesky_factor!(U)
+    triu2cholesky_factor!(_U)
     copy!(eA, Φ)
-    copy!(_U, U)
-    return Φ, _U
+    copy!(U, _U)
+    return Φ, U
 end
 
 
 function _exp_and_gram_double!(Φ0, U0, s, cache)
-    Φ = Φ0
     m, n = size(U0)
-    U = similar(Φ)
+    if cache == nothing
+        cache = (U = similar(Φ0), pre_array = similar(Φ0, 2n, n), tmp = similar(Φ0))
+    end
+    @unpack U, pre_array, tmp = cache
+
+    Φ = Φ0
     U[1:m, 1:n] .= U0
 
-    pre_array = similar(Φ, 2n, n)
-    tmp = similar(Φ)
     for _ = 1:s
         sub_array = view(pre_array, 1:2m, 1:n)
         mul!(view(sub_array, 1:m, 1:n), view(U, 1:m, 1:n), Φ')
-        sub_array[m+1:2m, 1:n] .= U[1:m, 1:n]
+        sub_array[m+1:2m, 1:n] .= @view U[1:m, 1:n]
         m = min(n, 2 * m) # new row-size of U
         U[1:m, 1:n] .= qr!(sub_array).R
 
@@ -195,8 +242,9 @@ function _exp_and_gram_chol_init!(
     A::AbstractMatrix{T},
     B::AbstractMatrix{T},
     method::ExpAndGram{T,q},
-    cache = nothing,
+    cache = alloc_mem(A, B, method),
 ) where {T,q}
+    @unpack P, A2, L, tmpA1, tmpA2, tmpA3, odd, even, Loddtmp = cache
 
     n, m = _dims_if_compatible(A::AbstractMatrix, B::AbstractMatrix) # first checks that (A, B) have compatible dimensions
     isodd(q) || throw(DomainError(q, "The degree $(q) must be odd")) # code heavily assumes odd degree expansion
@@ -206,13 +254,17 @@ function _exp_and_gram_chol_init!(
     gram_coeffs = method.gram_coeffs
     ncoeffhalf = div(q + 1, 2)
 
-    A2 = A * A
-    P = A2
+    mul!(A2, A, A)
+    copy!(P, A2)
 
-    odd = mul!(pade_num[4] * P, true, pade_num[2] * I, true, true) # odd part of the pade numerator
-    even = mul!(pade_num[3] * P, true, pade_num[1] * I, true, true) # even part of the pade numerator
+    # odd = pade_num[2] * I + pade_num[4] * P
+    mul!(odd, pade_num[2], I)
+    mul!(odd, pade_num[4], P, true, true)
+    # even = pade_num[1] * I + pade_num[3] * P
+    mul!(even, pade_num[1], I)
+    mul!(even, pade_num[3], P, true, true)
 
-    L = zeros(T, n, m * (q + 1)) # left square-root of the Grammian
+
     Leven = view(L, :, 1:m*ncoeffhalf)
     Lodd = view(L, :, m*ncoeffhalf+1:m*2*ncoeffhalf)
 
@@ -235,7 +287,8 @@ function _exp_and_gram_chol_init!(
     mul!(L3, P, B, gram_coeffs[4, 4], true)
 
     for k = 2:(div(length(pade_num), 2)-1)
-        P *= A2
+        mul!(tmpA1, P, A2)
+        copy!(P, tmpA1)
         mul!(even, pade_num[2k+1], P, true, true)
         mul!(odd, pade_num[2k+2], P, true, true)
 
@@ -248,20 +301,24 @@ function _exp_and_gram_chol_init!(
         end
     end
 
-    odd = A * odd
-    den = even - odd # pade denominator
-    num = even + odd # pade numerator
+    odd = mul!(tmpA1, A, odd)
+    den = tmpA2 .= even .- odd # pade denominator
+    num = tmpA3 .= even .+ odd # pade numerator
 
-    Lodd .= A * Lodd
+    Lodd .= mul!(Loddtmp, A, Lodd) # writes into L as Lodd and L share memory
 
     F = lu!(den)
     expA = num
     ldiv!(F, expA)
     ldiv!(F, L)
 
-    U = qr!(L').R # right Cholesky factor of the Grammian (may not be square!!)
-    U = triu2cholesky_factor!(U)
-    return expA, U
+    _U = qr!(L').R # right Cholesky factor of the Grammian (may not be square!!)
+    _U = triu2cholesky_factor!(_U)
+
+    copy!(eA, expA)
+    U .= 0
+    copy!(view(U, 1:size(_U, 1), 1:size(_U, 2)), _U)
+    return eA, U
 end
 
 
@@ -271,8 +328,9 @@ function _exp_and_gram_chol_init!(
     A::AbstractMatrix{T},
     B::AbstractMatrix{T},
     method::ExpAndGram{T,13},
-    cache = nothing,
+    cache = alloc_mem(A, B, method),
 ) where {T}
+    @unpack A2, A4, A6, tmpA1, tmpA2, tmpA3, L, tmpB2, A2B, A4B, A6B = cache
 
     n, m = size(B)
     n == LinearAlgebra.checksquare(A) || throw(
@@ -286,37 +344,29 @@ function _exp_and_gram_chol_init!(
     gram_coeffs = method.gram_coeffs
     q = 13
 
-    A2 = A * A
-    A4 = A2 * A2
-    A6 = A2 * A4
-    tmpA1, tmpA2 = similar(A6), similar(A6)
+    mul!(A2, A, A)
+    mul!(A4, A2, A2)
+    mul!(A6, A2, A4)
 
     @. tmpA1 = pade_num[14] * A6 + pade_num[12] * A4 + pade_num[10] * A2
     @. tmpA2 = pade_num[8] * A6 + pade_num[6] * A4 + pade_num[4] * A2
     mul!(tmpA2, true, pade_num[2] * I, true, true)
-    U = mul!(tmpA2, A6, tmpA1, true, true)
-    U = mul!(tmpA1, A, U) # U is odd terms
+    _U = mul!(tmpA2, A6, tmpA1, true, true)
+    _U = mul!(tmpA1, A, _U) # _U is odd terms
 
-    #tmpA1 = A # not good
-    tmpA1 = similar(A6) # quick fix
-
-    @. tmpA1 = pade_num[13] * A6 + pade_num[11] * A4 + pade_num[9] * A2
+    @. tmpA3 = pade_num[13] * A6 + pade_num[11] * A4 + pade_num[9] * A2
     @. tmpA2 = pade_num[7] * A6 + pade_num[5] * A4 + pade_num[3] * A2
     mul!(tmpA2, true, pade_num[1] * I, true, true)
-    V = mul!(tmpA2, A6, tmpA1, true, true) # V is even terms
+    V = mul!(tmpA2, A6, tmpA3, true, true) # V is even terms
 
-    @. tmpA1 = V + U # numerator
-    @. tmpA2 = V - U  # denominator
-    num = tmpA1
+    @. tmpA3 = V + _U # numerator
+    @. tmpA2 = V - _U # denominator
+    num = tmpA3
     den = tmpA2
 
-    L = similar(A, n, m * (q + 1))
-
-    A2B = A2 * B
-    A4B = A4 * B
-    A6B = A6 * B
-
-    tmpB2 = similar(B)
+    mul!(A2B, A2, B)
+    mul!(A4B, A4, B)
+    mul!(A6B, A6, B)
 
     # L0
     L0 = view(L, 1:n, 1:m)
@@ -417,9 +467,13 @@ function _exp_and_gram_chol_init!(
     ldiv!(F, expA)
     ldiv!(F, L)
 
-    U = qr!(L').R # right Cholesky factor of the Grammian (may not be square!!)
-    U = triu2cholesky_factor!(U)
-    return expA, U
+    _U = qr!(L').R # right Cholesky factor of the Grammian (may not be square!!)
+    _U = triu2cholesky_factor!(_U)
+
+    copy!(eA, expA)
+    U .= 0
+    copy!(view(U, 1:size(_U, 1), 1:size(_U, 2)), _U)
+    return eA, U
 end
 
 
