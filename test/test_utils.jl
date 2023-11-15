@@ -48,9 +48,15 @@ end
 mf_exp_and_gram(A, B) = mf_exp_and_gram(A, B, true)
 
 function mf_exp_and_gram(A, B, t)
+    A, B, t = big.(A), big.(B), big.(t)
     n = LinearAlgebra.checksquare(A)
+
     pre_array = [A B*B'; zero(A) -A']
-    post_array = exp(pre_array * t)
+
+    method = ExpMethodGeneric()
+    cache = ExponentialUtilities.alloc_mem(pre_array, method)
+    #post_array = exp(pre_array * t)
+    post_array = exponential!(pre_array .* t, method, cache)
     Φ = post_array[1:n, 1:n]
     G = post_array[1:n, n+1:2n] * Φ'
     FHG._symmetrize!(G)

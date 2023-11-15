@@ -4,7 +4,7 @@ function test_exp_and_gram(T)
     A = randn(T, n, n)
     B = randn(T, n, m)
 
-    tol = 1e-10
+    tol = 1e-11
 
     ts = [0.5, 1.0, 1.5]
 
@@ -16,7 +16,7 @@ function test_exp_and_gram(T)
 
         err(G1, G2) = opnorm(G1 - G2, 1) / opnorm(G2, 1)
 
-        @testset "$(method) | exp_and_gram" begin
+        @testset "q = $(q) | exp_and_gram" begin
             for t in ts
                 Φgt, Ggt = mf_exp_and_gram(A, B, t)
                 Φ, G = exp_and_gram(A, B, t, method)
@@ -28,7 +28,7 @@ function test_exp_and_gram(T)
             @test isapprox(err(G, Ggt), zero(T), atol = tol)
         end
 
-        @testset "$(method) | exp_and_gram_chol" begin
+        @testset "q = $(q) | exp_and_gram_chol" begin
             for t in ts
                 Φgt, Ggt = mf_exp_and_gram(A, B, t)
                 Φ, U = exp_and_gram_chol(A, B, t, method)
@@ -44,10 +44,10 @@ function test_exp_and_gram(T)
             @test isapprox(err(G, Ggt), zero(T), atol = tol)
         end
 
-        @testset "$(method) | on-square initial Gramian" begin  
+        @testset "q = $(q) | on-square initial Gramian" begin
             # test covering the case when initial cholesky factor is non-square
-            m = 1 
-            n = m * (q + 2) 
+            m = 1
+            n = m * (q + 2)
             A = - tril(ones(n, n))
             B = ones(n, m)
             @test_nowarn exp_and_gram_chol(A, B, method)
