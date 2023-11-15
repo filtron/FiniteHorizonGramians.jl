@@ -18,16 +18,16 @@ export MatrixFraction
 FiniteHorizonGramians.exp_and_gram(A::AbstractMatrix{T}, B::AbstractMatrix{T}, ::MatrixFraction) where {T}
 
 
-Computes the matrix exponential of A and the finite horizon Grammian of A and B using a non-adaptive 
-Pade based scaling and squaring method  
+Computes the matrix exponential of A and the finite horizon Grammian of A and B using a non-adaptive
+Pade based scaling and squaring method
 """
 function FHG.exp_and_gram(
     A::AbstractMatrix{T},
     B::AbstractMatrix{T},
     ::MatrixFraction,
-) where {T}
-    LinearAlgebra.require_one_based_indexing(A) # to be on the safe side 
-    LinearAlgebra.require_one_based_indexing(B) # to be on the safe side 
+) where {T<:Number}
+    LinearAlgebra.require_one_based_indexing(A) # to be on the safe side
+    LinearAlgebra.require_one_based_indexing(B) # to be on the safe side
 
     n, _ = size(B)
     n == LinearAlgebra.checksquare(A) || throw(
@@ -65,7 +65,7 @@ function integrator2AB(T, ndiff)
 end
 
 function integrator_exp_and_gram_chol(T, ndiff)
-    # transition matrix 
+    # transition matrix
     irange = collect(0:ndiff)
     g = @. exp(-logfactorial(irange))
     Φ = zeros(T, ndiff + one(ndiff), ndiff + one(ndiff))
@@ -75,7 +75,7 @@ function integrator_exp_and_gram_chol(T, ndiff)
         end
     end
 
-    # cholesky factor 
+    # cholesky factor
     L = zeros(T, ndiff + one(ndiff), ndiff + one(ndiff))
     @simd ivdep for n = 0:ndiff
         something = logfactorial(n)
@@ -158,7 +158,7 @@ function run_experiment(rng::AbstractRNG, e::MatrixDepotBuiltIn)
 
     relerrs = zeros(BigFloat, length(e.names))
     for (i, name) in pairs(e.names)
-        Araw, Braw = matrixdepot(name, e.n), randn(rng, e.n, e.m)
+        Araw, Braw = Matrix(matrixdepot(name, e.n)), randn(rng, e.n, e.m)
         A, B = big.(Matrix(Araw)), big.(Braw)
 
         _, G_gt = exp_and_gram(A, B, alg_gt)
