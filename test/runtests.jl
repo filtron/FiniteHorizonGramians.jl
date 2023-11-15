@@ -1,5 +1,5 @@
 using LinearAlgebra, SpecialFunctions
-using Test, FiniteHorizonGramians
+using Test, FiniteHorizonGramians, ExponentialUtilities
 using ForwardDiff, FiniteDiff
 import FiniteHorizonGramians as FHG
 
@@ -24,6 +24,7 @@ numeric_types = (Float64,)
             test_exp_and_gram(T)
         end
     end
+
 
     @testset "adaptive algorithm" begin
         for T in numeric_types
