@@ -48,7 +48,6 @@ function alloc_mem(A, B, ::ExpAndGram{T,q}) where {T,q}
         even = similar(A),
         tmpA1 = similar(A),
         tmpA2 = similar(A),
-        tmpA3 = similar(A),
         L = zeros(eltype(A), n, m * (q + 1)),
         Loddtmp = similar(B, n, m*ncoeffhalf),
     )
@@ -241,7 +240,7 @@ function _exp_and_gram_chol_init!(
     method::ExpAndGram{T,q},
     cache = alloc_mem(A, B, method),
 ) where {T,q}
-    @unpack P, A2, L, tmpA1, tmpA2, tmpA3, odd, even, Loddtmp = cache
+    @unpack P, A2, L, tmpA1, tmpA2, odd, even, Loddtmp = cache
 
     n, m = _dims_if_compatible(A::AbstractMatrix, B::AbstractMatrix) # first checks that (A, B) have compatible dimensions
     isodd(q) || throw(DomainError(q, "The degree $(q) must be odd")) # code heavily assumes odd degree expansion
@@ -300,21 +299,19 @@ function _exp_and_gram_chol_init!(
 
     odd = mul!(tmpA1, A, odd)
     den = tmpA2 .= even .- odd # pade denominator
-    num = tmpA3 .= even .+ odd # pade numerator
+    eA .= even .+ odd # pade numerator
 
     Lodd .= mul!(Loddtmp, A, Lodd) # writes into L as Lodd and L share memory
 
     F = lu!(den)
-    expA = num
-    ldiv!(F, expA)
+    ldiv!(F, eA)
     ldiv!(F, L)
 
-    _U = qr!(L').R # right Cholesky factor of the Grammian (may not be square!!)
-    _U = triu2cholesky_factor!(_U)
+    thinU = qr!(L').R # right Cholesky factor of the Grammian (may not be square!!)
+    thinU = triu2cholesky_factor!(thinU)
 
-    copy!(eA, expA)
     U .= 0
-    copy!(view(U, 1:size(_U, 1), 1:size(_U, 2)), _U)
+    copy!(view(U, 1:size(thinU, 1), 1:size(thinU, 2)), thinU)
     return eA, U
 end
 
