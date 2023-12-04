@@ -45,7 +45,6 @@ function alloc_mem(A, B, ::ExpAndGram{T,q}) where {T,q}
         odd = similar(A),
         even = similar(A),
         tmpA1 = similar(A),
-        tmpA2 = similar(A),
         L = zeros(eltype(A), n, m * (q + 1)),
     )
 end
@@ -236,7 +235,7 @@ function _exp_and_gram_chol_init!(
     method::ExpAndGram{T,q},
     cache = alloc_mem(A, B, method),
 ) where {T,q}
-    @unpack P, A2, L, tmpA1, tmpA2, odd, even = cache
+    @unpack P, A2, L, tmpA1, odd, even = cache
 
     n, m = _dims_if_compatible(A::AbstractMatrix, B::AbstractMatrix) # first checks that (A, B) have compatible dimensions
     isodd(q) || throw(DomainError(q, "The degree $(q) must be odd")) # code heavily assumes odd degree expansion
@@ -292,11 +291,14 @@ function _exp_and_gram_chol_init!(
         end
     end
 
-    odd = mul!(tmpA1, A, odd)
-    den = tmpA2 .= even .- odd # pade denominator
+    mul!(tmpA1, A, odd)
+    odd, tmpA1 = tmpA1, odd # equivalent to A * odd
+
+    den = tmpA1
+    @. den = even - odd # pade denominator
     @. eA = even + odd # pade numerator
 
-    # aff factor A to odd parts in L
+    # add factor A to odd parts in L
     for i = 0:div(q - 1, 2)
         Loddi = view(Lodd, 1:n, i*m+1:(i+1)*m)
         mul!(B, A, Loddi) # can use B as intermediate array as it is part of the cache
