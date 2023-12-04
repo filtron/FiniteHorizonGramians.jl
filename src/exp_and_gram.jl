@@ -312,7 +312,7 @@ function _exp_and_gram_chol_init!(
     thinU = qr!(L').R # right Cholesky factor of the Grammian (may not be square!!)
     thinU = triu2cholesky_factor!(thinU)
 
-    U .= 0
+    fill!(U, zero(eltype(U)))
     copy!(view(U, 1:size(thinU, 1), 1:size(thinU, 2)), thinU)
     return eA, U
 end
@@ -462,7 +462,7 @@ function _exp_and_gram_chol_init!(
     _U = triu2cholesky_factor!(_U)
 
     copy!(eA, expA)
-    U .= 0
+    fill!(U, zero(eltype(U)))
     copy!(view(U, 1:size(_U, 1), 1:size(_U, 2)), _U)
     return eA, U
 end
