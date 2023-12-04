@@ -34,11 +34,10 @@ function exp_and_gram(
     return exp_and_gram!(similar(A), similar(A), copy(A), copy(B), t, method)
 end
 
-function alloc_mem(A, B, method::ExpAndGram{T,q}) where {T,q}
+function alloc_mem(A, B, ::ExpAndGram{T,q}) where {T,q}
     n, m = size(B)
     ncoeffhalf = div(q + 1, 2)
     return (
-        U = similar(A),
         pre_array = similar(A, 2n, n),
         tmp = similar(A),
         _A = similar(A),
@@ -71,7 +70,6 @@ function alloc_mem(A, B, method::ExpAndGram{T,13}) where {T}
         A2B = similar(B),
         A4B = similar(B),
         A6B = similar(B),
-        U = similar(A),
         pre_array = similar(A, 2n, n),
         tmp = similar(A),
     )
@@ -86,7 +84,7 @@ function exp_and_gram!(
     cache = alloc_mem(A, B, method),
 ) where {T<:Number}
     Φ, U = exp_and_gram_chol!(eA, U, A, B, method, cache)
-    G = isnothing(cache) ? copy(U) : cache.U
+    G = isnothing(cache) ? copy(U) : cache._A
     mul!(G, U', U)
     _symmetrize!(G)
     return Φ, G
@@ -102,7 +100,7 @@ function exp_and_gram!(
     cache = alloc_mem(A, B, method),
 ) where {T<:Number}
     Φ, U = exp_and_gram_chol!(eA, U, A, B, t, method, cache)
-    G = isnothing(cache) ? copy(U) : cache.U
+    G = isnothing(cache) ? copy(U) : cache._A
     mul!(G, U', U)
     _symmetrize!(G)
     return Φ, G
@@ -191,41 +189,40 @@ function exp_and_gram_chol!(
         Bt ./= convert(T, sqrt(2^si))
     end
 
-    Φ, _U = _exp_and_gram_chol_init!(eA, U, At, Bt, method, cache)
+    # eA, U contains initial approximations, both are square
+    eA, U = _exp_and_gram_chol_init!(eA, U, At, Bt, method, cache)
 
-    # should pre-allocate here
     if s > 0
-        Φ, _U = _exp_and_gram_double!(Φ, _U, si, cache)
+        # eA, U contain final approximations
+        eA, U = _exp_and_gram_double!(eA, U, si, cache)
     end
 
-    triu2cholesky_factor!(_U)
-    copy!(eA, Φ)
-    copy!(U, _U)
-    return Φ, U
+    # fix the diagonal signs on U
+    triu2cholesky_factor!(U)
+    return eA, U
 end
 
 
-function _exp_and_gram_double!(Φ0, U0, s, cache)
-    m, n = size(U0)
-    if cache == nothing
-        cache = (U = similar(Φ0), pre_array = similar(Φ0, 2n, n), tmp = similar(Φ0))
+function _exp_and_gram_double!(eA, U, s, cache)
+    n = LinearAlgebra.checksquare(U)
+    if isnothing(cache)
+        cache = (pre_array = similar(U, 2n, n), tmp = similar(Φ0))
     end
-    @unpack U, pre_array, tmp = cache
-
-    Φ = Φ0
-    U[1:m, 1:n] .= U0
+    @unpack pre_array = cache
 
     for _ = 1:s
-        sub_array = view(pre_array, 1:2m, 1:n)
-        mul!(view(sub_array, 1:m, 1:n), view(U, 1:m, 1:n), Φ')
-        sub_array[m+1:2m, 1:n] .= @view U[1:m, 1:n]
-        m = min(n, 2 * m) # new row-size of U
-        U[1:m, 1:n] .= qr!(sub_array).R
+        # form pre-array for doubling of U
+        mul!(view(pre_array, 1:n, 1:n), U, eA')
+        pre_array[n+1:2n, 1:n] .= U
 
-        mul!(tmp, Φ, Φ)
-        Φ .= tmp
+        # doubling of eA (use U as an intermediate array)
+        mul!(U, eA, eA)
+        eA .= U
+
+        # form doubled U in square, triangular form
+        U .= qr!(pre_array).R
     end
-    return Φ, U
+    return eA, U
 end
 
 
