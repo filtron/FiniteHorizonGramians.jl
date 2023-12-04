@@ -326,12 +326,7 @@ function _exp_and_gram_chol_init!(
 ) where {T}
     @unpack A2, A4, A6, tmpA1, tmpA2, tmpA3, L, tmpB2, A2B, A4B, A6B = cache
 
-    n, m = size(B)
-    n == LinearAlgebra.checksquare(A) || throw(
-        DimensionMismatch(
-            "size of A, $(LinearAlgebra.checksquare(A)), incompatible with the size of B, $(size(B)).",
-        ),
-    )
+    n, m = _dims_if_compatible(A::AbstractMatrix, B::AbstractMatrix) # first checks that (A, B) have compatible dimensions
 
     # fetch expansion coefficients
     pade_num = method.pade_num
