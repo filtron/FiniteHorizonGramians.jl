@@ -206,7 +206,7 @@ end
 function _exp_and_gram_double!(eA, U, s, cache)
     n = LinearAlgebra.checksquare(U)
     if isnothing(cache)
-        cache = (pre_array = similar(U, 2n, n), tmp = similar(Φ0))
+        cache = (pre_array = similar(U, 2n, n),)
     end
     @unpack pre_array = cache
 
