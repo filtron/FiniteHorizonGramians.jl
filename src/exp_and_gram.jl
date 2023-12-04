@@ -9,7 +9,6 @@ ExpAndGram{T,N}()
 
 creates an algorithm with coefficients stored in the numeric type T of order N.
 Current supported values of N are 3, 5, 7, 9, 13.
-
 """
 struct ExpAndGram{T,N,A,B} <: AbstractExpAndGramAlgorithm where {T,N,A,B}
     pade_num::A
@@ -34,6 +33,11 @@ function exp_and_gram(
     return exp_and_gram!(similar(A), similar(A), copy(A), copy(B), t, method)
 end
 
+"""
+    alloc_mem(A, B, ::ExpAndGram{T,q})
+
+Computes a cache for repeated computations with the same input arguments (A, B).
+"""
 function alloc_mem(A, B, ::ExpAndGram{T,q}) where {T,q}
     n, m = size(B)
     return (
@@ -46,7 +50,7 @@ function alloc_mem(A, B, ::ExpAndGram{T,q}) where {T,q}
         L = zeros(eltype(A), n, m * (q + 1)),
     )
 end
-function alloc_mem(A, B, method::ExpAndGram{T,13}) where {T}
+function alloc_mem(A, B, ::ExpAndGram{T,13}) where {T}
     q = 13
     n, m = size(B)
     return (
@@ -115,19 +119,7 @@ exp_and_gram_chol(
     exp_and_gram_chol!(similar(A), similar(A), copy(A), copy(B), t, method)
 
 
-"""
-exp_and_gram_chol!(
-    eA::AbstractMatrix{T},
-    U::AbstractMatrix{T},
-    A::AbstractMatrix{T},
-    B::AbstractMatrix{T},
-    method::AbstractExpAndGramAlgorithm,
-    cache = alloc_mem(A, B, method),
-)
 
-Computes the matrix exponential of A * t and the controllability Gramian of (A, B) on the interval [0, 1].
-The result is stored in (eA, _U), which are returned.
-"""
 function exp_and_gram_chol!(
     eA::AbstractMatrix{T},
     U::AbstractMatrix{T},
@@ -139,20 +131,7 @@ function exp_and_gram_chol!(
     return exp_and_gram_chol!(eA, U, A, B, true, method, cache)
 end
 
-"""
-exp_and_gram_chol!(
-    eA::AbstractMatrix{T},
-    U::AbstractMatrix{T},
-    A::AbstractMatrix{T},
-    B::AbstractMatrix{T},
-    [t::Number],
-    method::ExpAndGram{T,q},
-    [cache = alloc_mem(A, B, method)],
-)
 
-Computes the matrix exponential of A * t and the controllability Gramian of (A, B) on the interval [0, t].
-The result is stored in (eA, U), which are returned.
-"""
 function exp_and_gram_chol!(
     eA::AbstractMatrix{T},
     U::AbstractMatrix{T},
@@ -194,6 +173,22 @@ function exp_and_gram_chol!(
 end
 
 
+"""
+    _exp_and_gram_double!(eA, U, s, cache)
+
+Computes s iterations of the doubling recursions:
+
+```math
+Φ_{k+1} = Φ_k^2,
+```
+
+and
+
+```math
+U_{k+1}' U_{k+1} = Φ_k U_k' U_k Φ_k' + U_k' U_k
+```
+
+"""
 function _exp_and_gram_double!(eA, U, s, cache)
     n = LinearAlgebra.checksquare(U)
     if isnothing(cache)
@@ -219,10 +214,20 @@ end
 
 
 """
-    _exp_and_gram_init(A::AbstractMatrix{T}, B::AbstractMatrix{T}, L::LegendreExp{T})
+    _exp_and_gram_init(
+        A::AbstractMatrix{T},
+        B::AbstractMatrix{T},
+        method::ExpAndGram{T,q},
+        [cache=alloc_mem(A, B, method)],
+        )
 
-Computes the matrix exponential exp(A) and the controllability Grammian ∫_0^1 exp(A*t)*B*B'*exp(A'*t) dt,
-using a Legendre expansion of the matrix exponential.
+Computes the matrix exponential exp(A) and the controllability Grammian
+
+```math
+∫_0^1 e^{A t} B B' e^{A'*t} dt,
+```
+
+using a Legendre expansion of the matrix exponential of order q.
 """
 function _exp_and_gram_chol_init!(
     eA::AbstractMatrix{T},
