@@ -36,42 +36,33 @@ end
 
 function alloc_mem(A, B, ::ExpAndGram{T,q}) where {T,q}
     n, m = size(B)
-    ncoeffhalf = div(q + 1, 2)
     return (
         pre_array = similar(A, 2n, n),
-        tmp = similar(A),
-        _A = similar(A),
-        _B = similar(B),
-        P = similar(A),
-        A2 = similar(A),
+        At = similar(A),
+        Bt = similar(B),
         odd = similar(A),
         even = similar(A),
-        tmpA1 = similar(A),
-        tmpA2 = similar(A),
-        tmpA3 = similar(A),
+        tmpA = similar(A),
         L = zeros(eltype(A), n, m * (q + 1)),
-        Loddtmp = similar(B, n, m*ncoeffhalf),
     )
 end
 function alloc_mem(A, B, method::ExpAndGram{T,13}) where {T}
     q = 13
     n, m = size(B)
     return (
-        _A = similar(A),
-        _B = similar(B),
+        At = similar(A),
+        Bt = similar(B),
         A2 = similar(A),
         A4 = similar(A),
         A6 = similar(A),
-        tmpA1 = similar(A),
-        tmpA2 = similar(A),
-        tmpA3 = similar(A),
+        odd = similar(A),
+        even = similar(A),
         L = similar(A, n, m * (q + 1)),
         tmpB2 = similar(B),
         A2B = similar(B),
         A4B = similar(B),
         A6B = similar(B),
         pre_array = similar(A, 2n, n),
-        tmp = similar(A),
     )
 end
 
@@ -84,7 +75,7 @@ function exp_and_gram!(
     cache = alloc_mem(A, B, method),
 ) where {T<:Number}
     Φ, U = exp_and_gram_chol!(eA, U, A, B, method, cache)
-    G = isnothing(cache) ? copy(U) : cache._A
+    G = isnothing(cache) ? copy(U) : cache.At
     mul!(G, U', U)
     _symmetrize!(G)
     return Φ, G
@@ -100,7 +91,7 @@ function exp_and_gram!(
     cache = alloc_mem(A, B, method),
 ) where {T<:Number}
     Φ, U = exp_and_gram_chol!(eA, U, A, B, t, method, cache)
-    G = isnothing(cache) ? copy(U) : cache._A
+    G = isnothing(cache) ? copy(U) : cache.At
     mul!(G, U', U)
     _symmetrize!(G)
     return Φ, G
@@ -174,7 +165,7 @@ function exp_and_gram_chol!(
     At, Bt = if cache == nothing
         (A * t, B * sqrt(t))
     else
-        (mul!(cache._A, A, t), mul!(cache._B, B, sqrt(t)))
+        (mul!(cache.At, A, t), mul!(cache.Bt, B, sqrt(t)))
     end
 
     n, m = _dims_if_compatible(A::AbstractMatrix, B::AbstractMatrix) # first checks that (A, B) have compatible dimensions
@@ -206,7 +197,7 @@ end
 function _exp_and_gram_double!(eA, U, s, cache)
     n = LinearAlgebra.checksquare(U)
     if isnothing(cache)
-        cache = (pre_array = similar(U, 2n, n), tmp = similar(Φ0))
+        cache = (pre_array = similar(U, 2n, n),)
     end
     @unpack pre_array = cache
 
@@ -241,7 +232,7 @@ function _exp_and_gram_chol_init!(
     method::ExpAndGram{T,q},
     cache = alloc_mem(A, B, method),
 ) where {T,q}
-    @unpack P, A2, L, tmpA1, tmpA2, tmpA3, odd, even, Loddtmp = cache
+    @unpack L, tmpA, odd, even = cache
 
     n, m = _dims_if_compatible(A::AbstractMatrix, B::AbstractMatrix) # first checks that (A, B) have compatible dimensions
     isodd(q) || throw(DomainError(q, "The degree $(q) must be odd")) # code heavily assumes odd degree expansion
@@ -251,6 +242,8 @@ function _exp_and_gram_chol_init!(
     gram_coeffs = method.gram_coeffs
     ncoeffhalf = div(q + 1, 2)
 
+    A2 = eA # A2 is used to increment the power of A in P, we can use eA for this
+    P = U # P is used to iterate through even powers of A, we can use U for this
     mul!(A2, A, A)
     copy!(P, A2)
 
@@ -260,7 +253,6 @@ function _exp_and_gram_chol_init!(
     # even = pade_num[1] * I + pade_num[3] * P
     mul!(even, pade_num[1], I)
     mul!(even, pade_num[3], P, true, true)
-
 
     Leven = view(L, :, 1:m*ncoeffhalf)
     Lodd = view(L, :, m*ncoeffhalf+1:m*2*ncoeffhalf)
@@ -284,8 +276,8 @@ function _exp_and_gram_chol_init!(
     mul!(L3, P, B, gram_coeffs[4, 4], true)
 
     for k = 2:(div(length(pade_num), 2)-1)
-        mul!(tmpA1, P, A2)
-        copy!(P, tmpA1)
+        mul!(tmpA, P, A2)
+        copy!(P, tmpA)
         mul!(even, pade_num[2k+1], P, true, true)
         mul!(odd, pade_num[2k+2], P, true, true)
 
@@ -298,23 +290,29 @@ function _exp_and_gram_chol_init!(
         end
     end
 
-    odd = mul!(tmpA1, A, odd)
-    den = tmpA2 .= even .- odd # pade denominator
-    num = tmpA3 .= even .+ odd # pade numerator
+    mul!(tmpA, A, odd)
+    odd, tmpA = tmpA, odd # equivalent to A * odd
 
-    Lodd .= mul!(Loddtmp, A, Lodd) # writes into L as Lodd and L share memory
+    den = tmpA
+    @. den = even - odd # pade denominator
+    @. eA = even + odd # pade numerator
+
+    # add factor A to odd parts in L
+    for i = 0:div(q - 1, 2)
+        Loddi = view(Lodd, 1:n, i*m+1:(i+1)*m)
+        mul!(B, A, Loddi) # can use B as intermediate array as it is part of the cache
+        Loddi .= B
+    end
 
     F = lu!(den)
-    expA = num
-    ldiv!(F, expA)
+    ldiv!(F, eA)
     ldiv!(F, L)
 
-    _U = qr!(L').R # right Cholesky factor of the Grammian (may not be square!!)
-    _U = triu2cholesky_factor!(_U)
+    thinU = qr!(L').R # right Cholesky factor of the Grammian (may not be square!!)
+    thinU = triu2cholesky_factor!(thinU)
 
-    copy!(eA, expA)
-    U .= 0
-    copy!(view(U, 1:size(_U, 1), 1:size(_U, 2)), _U)
+    fill!(U, zero(eltype(U)))
+    copy!(view(U, 1:size(thinU, 1), 1:size(thinU, 2)), thinU)
     return eA, U
 end
 
@@ -327,14 +325,9 @@ function _exp_and_gram_chol_init!(
     method::ExpAndGram{T,13},
     cache = alloc_mem(A, B, method),
 ) where {T}
-    @unpack A2, A4, A6, tmpA1, tmpA2, tmpA3, L, tmpB2, A2B, A4B, A6B = cache
+    @unpack A2, A4, A6, odd, even, L, tmpB2, A2B, A4B, A6B = cache
 
-    n, m = size(B)
-    n == LinearAlgebra.checksquare(A) || throw(
-        DimensionMismatch(
-            "size of A, $(LinearAlgebra.checksquare(A)), incompatible with the size of B, $(size(B)).",
-        ),
-    )
+    n, m = _dims_if_compatible(A::AbstractMatrix, B::AbstractMatrix) # first checks that (A, B) have compatible dimensions
 
     # fetch expansion coefficients
     pade_num = method.pade_num
@@ -345,21 +338,20 @@ function _exp_and_gram_chol_init!(
     mul!(A4, A2, A2)
     mul!(A6, A2, A4)
 
-    @. tmpA1 = pade_num[14] * A6 + pade_num[12] * A4 + pade_num[10] * A2
-    @. tmpA2 = pade_num[8] * A6 + pade_num[6] * A4 + pade_num[4] * A2
-    mul!(tmpA2, true, pade_num[2] * I, true, true)
-    _U = mul!(tmpA2, A6, tmpA1, true, true)
-    _U = mul!(tmpA1, A, _U) # _U is odd terms
+    @. odd = pade_num[14] * A6 + pade_num[12] * A4 + pade_num[10] * A2
+    @. even = pade_num[8] * A6 + pade_num[6] * A4 + pade_num[4] * A2
+    mul!(even, true, pade_num[2] * I, true, true)
+    mul!(even, A6, odd, true, true)
+    mul!(odd, A, even)
 
-    @. tmpA3 = pade_num[13] * A6 + pade_num[11] * A4 + pade_num[9] * A2
-    @. tmpA2 = pade_num[7] * A6 + pade_num[5] * A4 + pade_num[3] * A2
-    mul!(tmpA2, true, pade_num[1] * I, true, true)
-    V = mul!(tmpA2, A6, tmpA3, true, true) # V is even terms
+    @. eA = pade_num[13] * A6 + pade_num[11] * A4 + pade_num[9] * A2
+    @. even = pade_num[7] * A6 + pade_num[5] * A4 + pade_num[3] * A2
+    mul!(even, true, pade_num[1] * I, true, true)
+    mul!(even, A6, eA, true, true)
 
-    @. tmpA3 = V + _U # numerator
-    @. tmpA2 = V - _U # denominator
-    num = tmpA3
-    den = tmpA2
+    @. eA = even + odd # numerator
+    @. even = even - odd # denominator
+    den = even
 
     mul!(A2B, A2, B)
     mul!(A4B, A4, B)
@@ -460,16 +452,14 @@ function _exp_and_gram_chol_init!(
     copy!(L13, tmpB2)
 
     F = lu!(den)
-    expA = num
-    ldiv!(F, expA)
+    ldiv!(F, eA)
     ldiv!(F, L)
 
-    _U = qr!(L').R # right Cholesky factor of the Grammian (may not be square!!)
-    _U = triu2cholesky_factor!(_U)
+    thinU = qr!(L').R # right Cholesky factor of the Grammian (may not be square!!)
+    thinU = triu2cholesky_factor!(thinU)
 
-    copy!(eA, expA)
-    U .= 0
-    copy!(view(U, 1:size(_U, 1), 1:size(_U, 2)), _U)
+    fill!(U, zero(eltype(U)))
+    copy!(view(U, 1:size(thinU, 1), 1:size(thinU, 2)), thinU)
     return eA, U
 end
 
