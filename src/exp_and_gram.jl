@@ -34,11 +34,10 @@ function exp_and_gram(
     return exp_and_gram!(similar(A), similar(A), copy(A), copy(B), t, method)
 end
 
-function alloc_mem(A, B, method::ExpAndGram{T,q}) where {T,q}
+function alloc_mem(A, B, ::ExpAndGram{T,q}) where {T,q}
     n, m = size(B)
     ncoeffhalf = div(q + 1, 2)
     return (
-        U = similar(A),
         pre_array = similar(A, 2n, n),
         tmp = similar(A),
         _A = similar(A),
@@ -71,7 +70,6 @@ function alloc_mem(A, B, method::ExpAndGram{T,13}) where {T}
         A2B = similar(B),
         A4B = similar(B),
         A6B = similar(B),
-        U = similar(A),
         pre_array = similar(A, 2n, n),
         tmp = similar(A),
     )
@@ -86,7 +84,7 @@ function exp_and_gram!(
     cache = alloc_mem(A, B, method),
 ) where {T<:Number}
     Φ, U = exp_and_gram_chol!(eA, U, A, B, method, cache)
-    G = isnothing(cache) ? copy(U) : cache.U
+    G = isnothing(cache) ? copy(U) : cache._A
     mul!(G, U', U)
     _symmetrize!(G)
     return Φ, G
@@ -102,7 +100,7 @@ function exp_and_gram!(
     cache = alloc_mem(A, B, method),
 ) where {T<:Number}
     Φ, U = exp_and_gram_chol!(eA, U, A, B, t, method, cache)
-    G = isnothing(cache) ? copy(U) : cache.U
+    G = isnothing(cache) ? copy(U) : cache._A
     mul!(G, U', U)
     _symmetrize!(G)
     return Φ, G
@@ -191,13 +189,15 @@ function exp_and_gram_chol!(
         Bt ./= convert(T, sqrt(2^si))
     end
 
-    Φ, U = _exp_and_gram_chol_init!(eA, U, At, Bt, method, cache)
+    # eA, U contains initial approximations, both are square
+    eA, U = _exp_and_gram_chol_init!(eA, U, At, Bt, method, cache)
 
-    # should pre-allocate here
     if s > 0
+        # eA, U contain final approximations
         eA, U = _exp_and_gram_double!(eA, U, si, cache)
     end
 
+    # fix the diagonal signs on U
     triu2cholesky_factor!(U)
     return eA, U
 end
