@@ -44,7 +44,7 @@ function alloc_mem(A, B, ::ExpAndGram{T,q}) where {T,q}
         A2 = similar(A),
         odd = similar(A),
         even = similar(A),
-        tmpA1 = similar(A),
+        tmpA = similar(A),
         L = zeros(eltype(A), n, m * (q + 1)),
     )
 end
@@ -235,7 +235,7 @@ function _exp_and_gram_chol_init!(
     method::ExpAndGram{T,q},
     cache = alloc_mem(A, B, method),
 ) where {T,q}
-    @unpack P, A2, L, tmpA1, odd, even = cache
+    @unpack P, A2, L, tmpA, odd, even = cache
 
     n, m = _dims_if_compatible(A::AbstractMatrix, B::AbstractMatrix) # first checks that (A, B) have compatible dimensions
     isodd(q) || throw(DomainError(q, "The degree $(q) must be odd")) # code heavily assumes odd degree expansion
@@ -277,8 +277,8 @@ function _exp_and_gram_chol_init!(
     mul!(L3, P, B, gram_coeffs[4, 4], true)
 
     for k = 2:(div(length(pade_num), 2)-1)
-        mul!(tmpA1, P, A2)
-        copy!(P, tmpA1)
+        mul!(tmpA, P, A2)
+        copy!(P, tmpA)
         mul!(even, pade_num[2k+1], P, true, true)
         mul!(odd, pade_num[2k+2], P, true, true)
 
@@ -291,10 +291,10 @@ function _exp_and_gram_chol_init!(
         end
     end
 
-    mul!(tmpA1, A, odd)
-    odd, tmpA1 = tmpA1, odd # equivalent to A * odd
+    mul!(tmpA, A, odd)
+    odd, tmpA = tmpA, odd # equivalent to A * odd
 
-    den = tmpA1
+    den = tmpA
     @. den = even - odd # pade denominator
     @. eA = even + odd # pade numerator
 
