@@ -299,7 +299,7 @@ function _exp_and_gram_chol_init!(
 
     odd = mul!(tmpA1, A, odd)
     den = tmpA2 .= even .- odd # pade denominator
-    eA .= even .+ odd # pade numerator
+    @. eA = even + odd # pade numerator
 
     Lodd .= mul!(Loddtmp, A, Lodd) # writes into L as Lodd and L share memory
 
