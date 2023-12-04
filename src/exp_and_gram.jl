@@ -36,7 +36,6 @@ end
 
 function alloc_mem(A, B, ::ExpAndGram{T,q}) where {T,q}
     n, m = size(B)
-    ncoeffhalf = div(q + 1, 2)
     return (
         pre_array = similar(A, 2n, n),
         _A = similar(A),
@@ -48,7 +47,6 @@ function alloc_mem(A, B, ::ExpAndGram{T,q}) where {T,q}
         tmpA1 = similar(A),
         tmpA2 = similar(A),
         L = zeros(eltype(A), n, m * (q + 1)),
-        Loddtmp = similar(B, n, m*ncoeffhalf),
     )
 end
 function alloc_mem(A, B, method::ExpAndGram{T,13}) where {T}
@@ -238,7 +236,7 @@ function _exp_and_gram_chol_init!(
     method::ExpAndGram{T,q},
     cache = alloc_mem(A, B, method),
 ) where {T,q}
-    @unpack P, A2, L, tmpA1, tmpA2, odd, even, Loddtmp = cache
+    @unpack P, A2, L, tmpA1, tmpA2, odd, even = cache
 
     n, m = _dims_if_compatible(A::AbstractMatrix, B::AbstractMatrix) # first checks that (A, B) have compatible dimensions
     isodd(q) || throw(DomainError(q, "The degree $(q) must be odd")) # code heavily assumes odd degree expansion
@@ -257,7 +255,6 @@ function _exp_and_gram_chol_init!(
     # even = pade_num[1] * I + pade_num[3] * P
     mul!(even, pade_num[1], I)
     mul!(even, pade_num[3], P, true, true)
-
 
     Leven = view(L, :, 1:m*ncoeffhalf)
     Lodd = view(L, :, m*ncoeffhalf+1:m*2*ncoeffhalf)
@@ -299,7 +296,12 @@ function _exp_and_gram_chol_init!(
     den = tmpA2 .= even .- odd # pade denominator
     @. eA = even + odd # pade numerator
 
-    Lodd .= mul!(Loddtmp, A, Lodd) # writes into L as Lodd and L share memory
+    # aff factor A to odd parts in L
+    for i = 0:div(q - 1, 2)
+        Loddi = view(Lodd, 1:n, i*m+1:(i+1)*m)
+        mul!(B, A, Loddi) # can use B as intermediate array as it is part of the cache
+        Loddi .= B
+    end
 
     F = lu!(den)
     ldiv!(F, eA)
