@@ -57,7 +57,6 @@ function alloc_mem(A, B, method::ExpAndGram{T,13}) where {T}
         A6 = similar(A),
         tmpA1 = similar(A),
         tmpA2 = similar(A),
-        tmpA3 = similar(A),
         L = similar(A, n, m * (q + 1)),
         tmpB2 = similar(B),
         A2B = similar(B),
@@ -326,7 +325,7 @@ function _exp_and_gram_chol_init!(
     method::ExpAndGram{T,13},
     cache = alloc_mem(A, B, method),
 ) where {T}
-    @unpack A2, A4, A6, tmpA1, tmpA2, tmpA3, L, tmpB2, A2B, A4B, A6B = cache
+    @unpack A2, A4, A6, tmpA1, tmpA2, L, tmpB2, A2B, A4B, A6B = cache
 
     n, m = _dims_if_compatible(A::AbstractMatrix, B::AbstractMatrix) # first checks that (A, B) have compatible dimensions
 
@@ -345,14 +344,13 @@ function _exp_and_gram_chol_init!(
     _U = mul!(tmpA2, A6, tmpA1, true, true)
     _U = mul!(tmpA1, A, _U) # _U is odd terms
 
-    @. tmpA3 = pade_num[13] * A6 + pade_num[11] * A4 + pade_num[9] * A2
+    @. eA = pade_num[13] * A6 + pade_num[11] * A4 + pade_num[9] * A2
     @. tmpA2 = pade_num[7] * A6 + pade_num[5] * A4 + pade_num[3] * A2
     mul!(tmpA2, true, pade_num[1] * I, true, true)
-    V = mul!(tmpA2, A6, tmpA3, true, true) # V is even terms
+    V = mul!(tmpA2, A6, eA, true, true) # V is even terms
 
-    @. tmpA3 = V + _U # numerator
+    @. eA = V + _U # numerator
     @. tmpA2 = V - _U # denominator
-    num = tmpA3
     den = tmpA2
 
     mul!(A2B, A2, B)
@@ -454,16 +452,14 @@ function _exp_and_gram_chol_init!(
     copy!(L13, tmpB2)
 
     F = lu!(den)
-    expA = num
-    ldiv!(F, expA)
+    ldiv!(F, eA)
     ldiv!(F, L)
 
-    _U = qr!(L').R # right Cholesky factor of the Grammian (may not be square!!)
-    _U = triu2cholesky_factor!(_U)
+    thinU = qr!(L').R # right Cholesky factor of the Grammian (may not be square!!)
+    thinU = triu2cholesky_factor!(thinU)
 
-    copy!(eA, expA)
     fill!(U, zero(eltype(U)))
-    copy!(view(U, 1:size(_U, 1), 1:size(_U, 2)), _U)
+    copy!(view(U, 1:size(thinU, 1), 1:size(thinU, 2)), thinU)
     return eA, U
 end
 
