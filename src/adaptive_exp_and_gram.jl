@@ -25,7 +25,7 @@ alloc_mem(A, B, method::AdaptiveExpAndGram) = nothing
 
 function exp_and_gram_chol!(
     eA::AbstractMatrix{T},
-    _U::AbstractMatrix{T},
+    U::AbstractMatrix{T},
     A::AbstractMatrix{T},
     B::AbstractMatrix{T},
     t::Number,
@@ -34,7 +34,6 @@ function exp_and_gram_chol!(
 ) where {T<:Number}
     n, _ = _dims_if_compatible(A::AbstractMatrix, B::AbstractMatrix)
 
-
     At = A * t
     Bt = B * sqrt(t)
 
@@ -42,15 +41,15 @@ function exp_and_gram_chol!(
     normA = opnorm(At, 1)
 
     if normA <= methods[1].normtol && n <= 4
-        Φ, U = _exp_and_gram_chol_init!(eA, _U, At, Bt, methods[1])
+        Φ, U = _exp_and_gram_chol_init!(eA, U, At, Bt, methods[1])
     elseif normA <= methods[2].normtol && n <= 6
-        Φ, U = _exp_and_gram_chol_init!(eA, _U, At, Bt, methods[2])
+        Φ, U = _exp_and_gram_chol_init!(eA, U, At, Bt, methods[2])
     elseif normA <= methods[3].normtol && n <= 8
-        Φ, U = _exp_and_gram_chol_init!(eA, _U, At, Bt, methods[3])
+        Φ, U = _exp_and_gram_chol_init!(eA, U, At, Bt, methods[3])
     elseif normA <= methods[4].normtol && n <= 10
-        Φ, U = _exp_and_gram_chol_init!(eA, _U, At, Bt, methods[4])
+        Φ, U = _exp_and_gram_chol_init!(eA, U, At, Bt, methods[4])
     else
-        Φ, U = exp_and_gram_chol!(eA, _U, A, B, t, methods[5])
+        Φ, U = exp_and_gram_chol!(eA, U, A, B, t, methods[5])
     end
 
     return Φ, U
