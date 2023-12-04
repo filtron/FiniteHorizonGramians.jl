@@ -38,8 +38,8 @@ function alloc_mem(A, B, ::ExpAndGram{T,q}) where {T,q}
     n, m = size(B)
     return (
         pre_array = similar(A, 2n, n),
-        _A = similar(A),
-        _B = similar(B),
+        At = similar(A),
+        Bt = similar(B),
         odd = similar(A),
         even = similar(A),
         tmpA = similar(A),
@@ -50,8 +50,8 @@ function alloc_mem(A, B, method::ExpAndGram{T,13}) where {T}
     q = 13
     n, m = size(B)
     return (
-        _A = similar(A),
-        _B = similar(B),
+        At = similar(A),
+        Bt = similar(B),
         A2 = similar(A),
         A4 = similar(A),
         A6 = similar(A),
@@ -75,7 +75,7 @@ function exp_and_gram!(
     cache = alloc_mem(A, B, method),
 ) where {T<:Number}
     Φ, U = exp_and_gram_chol!(eA, U, A, B, method, cache)
-    G = isnothing(cache) ? copy(U) : cache._A
+    G = isnothing(cache) ? copy(U) : cache.At
     mul!(G, U', U)
     _symmetrize!(G)
     return Φ, G
@@ -91,7 +91,7 @@ function exp_and_gram!(
     cache = alloc_mem(A, B, method),
 ) where {T<:Number}
     Φ, U = exp_and_gram_chol!(eA, U, A, B, t, method, cache)
-    G = isnothing(cache) ? copy(U) : cache._A
+    G = isnothing(cache) ? copy(U) : cache.At
     mul!(G, U', U)
     _symmetrize!(G)
     return Φ, G
@@ -165,7 +165,7 @@ function exp_and_gram_chol!(
     At, Bt = if cache == nothing
         (A * t, B * sqrt(t))
     else
-        (mul!(cache._A, A, t), mul!(cache._B, B, sqrt(t)))
+        (mul!(cache.At, A, t), mul!(cache.Bt, B, sqrt(t)))
     end
 
     n, m = _dims_if_compatible(A::AbstractMatrix, B::AbstractMatrix) # first checks that (A, B) have compatible dimensions
