@@ -55,8 +55,8 @@ function alloc_mem(A, B, method::ExpAndGram{T,13}) where {T}
         A2 = similar(A),
         A4 = similar(A),
         A6 = similar(A),
-        tmpA1 = similar(A),
-        tmpA2 = similar(A),
+        odd = similar(A),
+        even = similar(A),
         L = similar(A, n, m * (q + 1)),
         tmpB2 = similar(B),
         A2B = similar(B),
@@ -325,7 +325,7 @@ function _exp_and_gram_chol_init!(
     method::ExpAndGram{T,13},
     cache = alloc_mem(A, B, method),
 ) where {T}
-    @unpack A2, A4, A6, tmpA1, tmpA2, L, tmpB2, A2B, A4B, A6B = cache
+    @unpack A2, A4, A6, odd, even, L, tmpB2, A2B, A4B, A6B = cache
 
     n, m = _dims_if_compatible(A::AbstractMatrix, B::AbstractMatrix) # first checks that (A, B) have compatible dimensions
 
@@ -338,20 +338,20 @@ function _exp_and_gram_chol_init!(
     mul!(A4, A2, A2)
     mul!(A6, A2, A4)
 
-    @. tmpA1 = pade_num[14] * A6 + pade_num[12] * A4 + pade_num[10] * A2
-    @. tmpA2 = pade_num[8] * A6 + pade_num[6] * A4 + pade_num[4] * A2
-    mul!(tmpA2, true, pade_num[2] * I, true, true)
-    _U = mul!(tmpA2, A6, tmpA1, true, true)
-    _U = mul!(tmpA1, A, _U) # _U is odd terms
+    @. odd = pade_num[14] * A6 + pade_num[12] * A4 + pade_num[10] * A2
+    @. even = pade_num[8] * A6 + pade_num[6] * A4 + pade_num[4] * A2
+    mul!(even, true, pade_num[2] * I, true, true)
+    mul!(even, A6, odd, true, true)
+    mul!(odd, A, even)
 
     @. eA = pade_num[13] * A6 + pade_num[11] * A4 + pade_num[9] * A2
-    @. tmpA2 = pade_num[7] * A6 + pade_num[5] * A4 + pade_num[3] * A2
-    mul!(tmpA2, true, pade_num[1] * I, true, true)
-    V = mul!(tmpA2, A6, eA, true, true) # V is even terms
+    @. even = pade_num[7] * A6 + pade_num[5] * A4 + pade_num[3] * A2
+    mul!(even, true, pade_num[1] * I, true, true)
+    mul!(even, A6, eA, true, true)
 
-    @. eA = V + _U # numerator
-    @. tmpA2 = V - _U # denominator
-    den = tmpA2
+    @. eA = even + odd # numerator
+    @. even = even - odd # denominator
+    den = even
 
     mul!(A2B, A2, B)
     mul!(A4B, A4, B)
