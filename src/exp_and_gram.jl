@@ -39,7 +39,6 @@ function alloc_mem(A, B, ::ExpAndGram{T,q}) where {T,q}
     ncoeffhalf = div(q + 1, 2)
     return (
         pre_array = similar(A, 2n, n),
-        tmp = similar(A),
         _A = similar(A),
         _B = similar(B),
         P = similar(A),
@@ -70,7 +69,6 @@ function alloc_mem(A, B, method::ExpAndGram{T,13}) where {T}
         A4B = similar(B),
         A6B = similar(B),
         pre_array = similar(A, 2n, n),
-        tmp = similar(A),
     )
 end
 
