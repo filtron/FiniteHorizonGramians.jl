@@ -40,8 +40,6 @@ function alloc_mem(A, B, ::ExpAndGram{T,q}) where {T,q}
         pre_array = similar(A, 2n, n),
         _A = similar(A),
         _B = similar(B),
-        P = similar(A),
-        A2 = similar(A),
         odd = similar(A),
         even = similar(A),
         tmpA = similar(A),
@@ -235,7 +233,7 @@ function _exp_and_gram_chol_init!(
     method::ExpAndGram{T,q},
     cache = alloc_mem(A, B, method),
 ) where {T,q}
-    @unpack P, A2, L, tmpA, odd, even = cache
+    @unpack L, tmpA, odd, even = cache
 
     n, m = _dims_if_compatible(A::AbstractMatrix, B::AbstractMatrix) # first checks that (A, B) have compatible dimensions
     isodd(q) || throw(DomainError(q, "The degree $(q) must be odd")) # code heavily assumes odd degree expansion
@@ -245,6 +243,8 @@ function _exp_and_gram_chol_init!(
     gram_coeffs = method.gram_coeffs
     ncoeffhalf = div(q + 1, 2)
 
+    A2 = eA # A2 is used to increment the power of A in P, we can use eA for this
+    P = U # P is used to iterate through even powers of A, we can use U for this
     mul!(A2, A, A)
     copy!(P, A2)
 
