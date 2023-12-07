@@ -23,7 +23,7 @@ $$
 The Gramian, $G(A, B)$, is positive semi-definite and therefore has an upper triangular Cholesky factor, $U(A, B)$.
 This package provides algorithms for computing both $e^A$ and $U(A, B)$,
 without having to form $G(A, B)$ as an intermediate step.
-This avoids the problem of failing Cholesky factorization when computing $G(A, B)$ directly leads to a numerically non-positive definite matrix.
+This avoids the problem of failing Cholesky factorizations when computing $G(A, B)$ directly leads to a numerically non-positive definite matrix.
 
 ## Application
 
@@ -45,7 +45,7 @@ This is useful for instance in so called array implementations of Gauss-Markov r
 ## Installation
 
 ```julia
-] add https://github.com/filtron/FiniteHorizonGramians.jl.git
+] FiniteHorizonGramians
 ```
 
 ## Basic usage
