@@ -1,6 +1,6 @@
 name = "FiniteHorizonGramians"
 uuid = "b59a298d-d283-4a37-9369-85a9f9a111a5"
-authors = ["Filip Tronarp <filip.tronarp@matstat.lu.se>", "Tony Stillfjord <tony.stillfjord@matstat.lu.se>"]
+authors = ["Filip Tronarp <filip.tronarp@matstat.lu.se>", "Tony Stillfjord <tony.stillfjord@matstat.lu.se>, and contributors"]
 version = "0.1.0"
 
 [deps]
