@@ -4,6 +4,7 @@ authors = ["Filip Tronarp <filip.tronarp@matstat.lu.se>", "Tony Stillfjord <tony
 version = "0.1.0"
 
 [deps]
+FastBroadcast = "7034ab61-46d4-4ed7-9d0f-46aef9175898"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 PrecompileTools = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
 SimpleUnPack = "ce78b400-467f-4804-87d8-8f486da07d0a"
