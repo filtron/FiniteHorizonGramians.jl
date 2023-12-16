@@ -2,6 +2,7 @@ using LinearAlgebra, SpecialFunctions
 using Test, FiniteHorizonGramians, ExponentialUtilities
 using ForwardDiff, FiniteDiff
 import FiniteHorizonGramians as FHG
+using Aqua, JET
 
 include("test_utils.jl")
 include("test_initial_approximations.jl")
@@ -36,4 +37,14 @@ numeric_types = (Float64,)
         test_ForwardDiff()
     end
 
+    @testset "Code quality (Aqua.jl)" begin
+        Aqua.test_all(FiniteHorizonGramians)
+    end
+
+    @testset "Code linting (JET.jl)" begin
+        JET.test_package(
+            FiniteHorizonGramians;
+            target_defined_modules=true,
+        )
+    end
 end
