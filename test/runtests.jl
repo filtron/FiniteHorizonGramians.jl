@@ -10,7 +10,7 @@ include("test_exp_and_gram.jl")
 include("test_adaptive_exp_and_gram.jl")
 include("test_autodiff.jl")
 
-numeric_types = (Float64,)
+numeric_types = (Float64, ComplexF64)
 
 @testset "FiniteHorizonGramians.jl" begin
 

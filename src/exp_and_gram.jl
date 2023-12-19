@@ -13,7 +13,7 @@ Current supported values of N are 3, 5, 7, 9, 13.
 struct ExpAndGram{T,N,A,B} <: AbstractExpAndGramAlgorithm where {T,N,A,B}
     pade_num::A
     gram_coeffs::B
-    normtol::T
+    normtol::Real
 end
 
 function exp_and_gram(
@@ -479,7 +479,7 @@ function ExpAndGram{T,3}() where {T}
         0.0 0.0 4.47213595499958 0.0
         0.0 0.0 0.0 0.37796447300922725
     ]
-    normtol = T(0.00067)
+    normtol = real(T)(0.00067)
     ExpAndGram{T,3,typeof(pade_num),typeof(gramcs)}(pade_num, gramcs, normtol)
 end
 
@@ -493,7 +493,7 @@ function ExpAndGram{T,5}() where {T}
         0.0 0.0 0.0 0.0 6.0 0.0
         0.0 0.0 0.0 0.0 0.0 0.30151134457776363
     ]
-    normtol = T(0.021)
+    normtol = real(T)(0.021)
     ExpAndGram{T,5,typeof(pade_num),typeof(gramcs)}(pade_num, gramcs, normtol)
 end
 
@@ -509,7 +509,7 @@ function ExpAndGram{T,7}() where {T}
         0.0 0.0 0.0 0.0 0.0 0.0 7.211102550927978 0.0
         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.25819888974716115
     ]
-    normtol = T(0.13)
+    normtol = real(T)(0.13)
     ExpAndGram{T,7,typeof(pade_num),typeof(gramcs)}(pade_num, gramcs, normtol)
 end
 
@@ -538,7 +538,7 @@ function ExpAndGram{T,9}() where {T}
         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 8.246211251235321 0.0
         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.22941573387056177
     ]
-    normtol = T(0.41)
+    normtol = real(T)(0.41)
     ExpAndGram{T,9,typeof(pade_num),typeof(gramcs)}(pade_num, gramcs, normtol)
 end
 
@@ -575,6 +575,6 @@ function ExpAndGram{T,13}() where {T}
         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 10.0 0.0
         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.19245008972987526
     ]
-    normtol = T(1.57)
+    normtol = real(T)(1.57)
     ExpAndGram{T,13,typeof(pade_num),typeof(gramcs)}(pade_num, gramcs, normtol)
 end
