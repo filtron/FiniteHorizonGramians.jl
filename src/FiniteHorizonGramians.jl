@@ -3,6 +3,7 @@ module FiniteHorizonGramians
 using LinearAlgebra
 using PrecompileTools
 using SimpleUnPack
+using FastBroadcast
 
 include("utils.jl")
 
