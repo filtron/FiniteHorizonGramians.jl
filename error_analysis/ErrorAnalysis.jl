@@ -69,7 +69,7 @@ struct BackwardBound{T,A}
     end
 end
 
-function (BWB::BackwardBound{T,A})(θ::T) where {T,A}
+function (BWB::BackwardBound{T,A})(θ::T)::T where {T,A}
     -log(one(T) - BWB.f(θ)) / θ
 end
 
@@ -80,8 +80,14 @@ end
 Compute the least norm that guarantees unit roundoff error in 
 the computed matrix exponential. 
 """
-function backward_bound_exp(T, qs, order::Integer)
+function backward_bound_exp(PT, T, qs, order::Integer)
     # twice the result of Higham (2005) is a good upper bound
+    if PT <: Float64
+        scaling = T(2)
+    elseif PT <: Float32
+        scaling = T(3.2)
+    end
+    unit_roundoff = eps(real(PT)) / 2
     ubs =
         T.([
             3.7e-8,
@@ -105,11 +111,11 @@ function backward_bound_exp(T, qs, order::Integer)
             1.2e1,
             1.3e1,
             1.4e1,
-        ]) * T(2)
+        ]) * scaling
     alg = Bisection()
     θs = map(zip(qs, ubs)) do (q, ub)
         bwb = BackwardBound{T}(q, order)
-        fun(θ, p) = bwb(θ) - T(2^(-53))
+        fun(θ, p) = bwb(θ) - T(unit_roundoff)
         interval = [big(1e-10), ub]
         prob = IntervalNonlinearProblem(fun, interval)
         sol = solve(prob, alg)
@@ -145,9 +151,10 @@ end
 Computes the zeros of the shifted Legendre polynomials. 
 """
 function legzeros(q::Integer, T)
-    legzeros = jacobi_zeros(q, zero(T), zero(T))
-    legzeros = (legzeros .+ one(eltype(legzeros))) / eltype(legzeros)(2)
-    return legzeros
+    zs = zeros(T, q)
+    jacobi_zeros!(q, zero(T), zero(T), zs)
+    zs .= (zs .+ one(eltype(zs))) / eltype(zs)(2)
+    return zs
 end
 
 struct VBound{T<:Number,C}
@@ -162,10 +169,10 @@ struct VBound{T<:Number,C}
         end_points = zs
         pushfirst!(end_points, zero(T))
         push!(end_points, one(T))
-        intervals = zip(end_points[begin:end-1], end_points[begin+1:end])
-        time_points =
-            mapreduce(x -> LinRange(first(x), last(x), ngrid), vcat, intervals) |> unique
-
+        #intervals = zip(end_points[begin:end-1], end_points[begin+1:end])
+        #time_points =
+        #    mapreduce(x -> LinRange(first(x), last(x), ngrid), vcat, intervals) |> unique
+        time_points = zs
         dθ = Taylor1(T, order)
         series = map(time_points) do tp
             te = V(q, tp, dθ)
@@ -189,15 +196,16 @@ end
 
 Computes bounds ηs such that the backward error in G is less than unit roundoff in Float64. 
 """
-function backward_bound_gram(T, qs, order::Integer, ngrid::Integer)
+function backward_bound_gram(PT, T, qs, order::Integer, ngrid::Integer)
     # fraction of θs probably good upper bound for ηs 
-    ubs = backward_bound_exp(T, qs, order) / T(2.0)
+    unit_roundoff = eps(real(PT)) / 2
+    ubs = backward_bound_exp(PT, T, qs, order) / T(1.0)
     ηs = similar(ubs)
     T = eltype(ηs)
     alg = Bisection()
     ηs = map(zip(qs, ubs)) do (q, ub)
         vb = VBound{T}(q, order, ngrid)
-        fun(θ, p) = vb(θ) - T(2^(-53))
+        fun(θ, p) = vb(θ) - T(unit_roundoff)
         interval = [big(0.0), ub]
         prob = IntervalNonlinearProblem(fun, interval)
         sol = solve(prob, alg)

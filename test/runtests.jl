@@ -10,7 +10,7 @@ include("test_exp_and_gram.jl")
 include("test_adaptive_exp_and_gram.jl")
 include("test_autodiff.jl")
 
-numeric_types = (Float64, ComplexF64)
+numeric_types = (Float32, Float64, ComplexF32, ComplexF64)
 
 @testset "FiniteHorizonGramians.jl" begin
 
@@ -42,9 +42,6 @@ numeric_types = (Float64, ComplexF64)
     end
 
     @testset "Code linting (JET.jl)" begin
-        JET.test_package(
-            FiniteHorizonGramians;
-            target_defined_modules=true,
-        )
+        JET.test_package(FiniteHorizonGramians; target_defined_modules = true)
     end
 end
