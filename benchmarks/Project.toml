@@ -1,0 +1,6 @@
+[deps]
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+ExponentialUtilities = "d4d017d3-3776-5f7e-afef-a10c40355c18"
+FastGaussQuadrature = "442a2c76-b920-505d-bb47-c5924d526838"
+FiniteHorizonGramians = "b59a298d-d283-4a37-9369-85a9f9a111a5"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
