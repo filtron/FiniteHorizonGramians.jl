@@ -1,17 +1,11 @@
 function test_exp_and_gram(T)
     RT = real(T)
-    
+
     # this is not totally correct
-    if RT  <: Float32
-    # fp32 tols
-    normtols = RT[
-        0.048,
-        0.61190283,
-        1.5580196,
-        2.801222,
-        5.7639575,
-    ]
-    else 
+    if RT <: Float32
+        # fp32 tols
+        normtols = RT[0.048, 0.61190283, 1.5580196, 2.801222, 5.7639575]
+    else
         # fp64 tols
         normtols = RT[
             0.0006794818550677766,
@@ -25,15 +19,15 @@ function test_exp_and_gram(T)
     n, m = 8, 2
     L = randn(T, n, n)
     Z = randn(T, n, n)
-    A = - L*L'/2 + (Z - Z')/2
+    A = -L * L' / 2 + (Z - Z') / 2
     B = randn(T, n, m)
 
     ts = [0.5, 1.0, 1.5]
 
     qs = [3, 5, 7, 9, 13]
-    if RT  <: Float32
+    if RT <: Float32
         # big tol for q = 3 needed for ComplexF32
-        tols = [3f-3, 1f-6, 1f-6, 61f-7, 6f-7] 
+        tols = [3.0f-3, 1.0f-6, 1.0f-6, 61.0f-7, 6.0f-7]
     else
         tols = [1e-10, 1e-13, 1e-13, 5e-14, 5e-15] # method 3 is quite inaccurate due to the doubling shenanigans...
     end

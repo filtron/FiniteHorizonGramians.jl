@@ -3,12 +3,12 @@ function test_adaptive_exp_and_gram(T)
     n, m = 8, 2
     L = randn(T, n, n)
     Z = randn(T, n, n)
-    A = - L*L'/2 + (Z - Z')/2
+    A = -L * L' / 2 + (Z - Z') / 2
     B = randn(T, n, m)
 
     RT = real(T)
     if RT <: Float32
-        tol = 5f-6
+        tol = 5.0f-6
     else
         tol = 5e-14
     end

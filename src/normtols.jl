@@ -31,5 +31,3 @@ _normtol(::Type{T}, ::Val{13}) where {T<:Float64} = 1.579470165477942
 
 # this is a bit hacky but should work for Floats / ComplexFloats / Duals 
 _normtol(::Type{T}, ::Val{Q}) where {T,Q} = _normtol(typeof(eps(real(float(T)))), Val(Q))
-
-
