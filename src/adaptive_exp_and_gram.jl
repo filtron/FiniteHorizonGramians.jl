@@ -34,8 +34,8 @@ function exp_and_gram_chol!(
 ) where {T<:Number}
     n, _ = _dims_if_compatible(A::AbstractMatrix, B::AbstractMatrix)
 
-    At = A * t
-    Bt = B * sqrt(t)
+    At = A * T(t)
+    Bt = B * T(sqrt(t))
 
     methods = method.methods
     normA = opnorm(At, 1)

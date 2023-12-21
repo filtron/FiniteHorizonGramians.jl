@@ -1,5 +1,5 @@
 #=
-# norm tolls for q in 1:13 for Float62/32
+# norm tolls for q in (3, 5, 7, 9, 13) for Float62/32
 normtols64 = T[
     0.0006794818550677766,
     0.021803366063031033,
@@ -17,11 +17,11 @@ normtols32 = T[
 ]
 =#
 
-_normtol(::Type{T}, ::Val{3}) where {T<:Float32} = 0.048
-_normtol(::Type{T}, ::Val{5}) where {T<:Float32} = 0.61190283
-_normtol(::Type{T}, ::Val{7}) where {T<:Float32} = 1.5580196
-_normtol(::Type{T}, ::Val{9}) where {T<:Float32} = 2.801222
-_normtol(::Type{T}, ::Val{13}) where {T<:Float32} = 5.7639575
+_normtol(::Type{T}, ::Val{3}) where {T<:Float32} = T(0.048)
+_normtol(::Type{T}, ::Val{5}) where {T<:Float32} = T(0.61190283)
+_normtol(::Type{T}, ::Val{7}) where {T<:Float32} = T(1.5580196)
+_normtol(::Type{T}, ::Val{9}) where {T<:Float32} = T(2.801222)
+_normtol(::Type{T}, ::Val{13}) where {T<:Float32} = T(5.7639575)
 
 _normtol(::Type{T}, ::Val{3}) where {T<:Float64} = 0.0006794818550677766
 _normtol(::Type{T}, ::Val{5}) where {T<:Float64} = 0.021803366063031033
