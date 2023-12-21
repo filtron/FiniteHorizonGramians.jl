@@ -32,14 +32,14 @@ function test_exp_and_gram(T)
             for t in ts
                 Φgt, Ggt = mf_exp_and_gram(A, B, t)
                 Φ, U = exp_and_gram_chol(A, B, t, method)
-                G = U'*U
+                G = U' * U
                 FHG._symmetrize!(G)
                 @test isapprox(err(Φ, Φgt), zero(T), atol = tols[i])
                 @test isapprox(err(G, Ggt), zero(T), atol = tols[i])
             end
             Φgt, Ggt = mf_exp_and_gram(A, B)
             Φ, U = exp_and_gram_chol(A, B, method)
-            G = U'*U
+            G = U' * U
             FHG._symmetrize!(G)
             @test isapprox(err(G, Ggt), zero(T), atol = tols[i])
         end
@@ -48,7 +48,7 @@ function test_exp_and_gram(T)
             # test covering the case when initial cholesky factor is non-square
             m = 1
             n = m * (q + 2)
-            A = - tril(ones(T, n, n))
+            A = -tril(ones(T, n, n))
             B = ones(T, n, m)
             @test_nowarn exp_and_gram_chol(A, B, method)
         end

@@ -42,9 +42,6 @@ numeric_types = (Float64, ComplexF64)
     end
 
     @testset "Code linting (JET.jl)" begin
-        JET.test_package(
-            FiniteHorizonGramians;
-            target_defined_modules=true,
-        )
+        JET.test_package(FiniteHorizonGramians; target_defined_modules = true)
     end
 end

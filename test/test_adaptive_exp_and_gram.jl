@@ -43,7 +43,7 @@ function test_adaptive_exp_and_gram(T)
     q = 13
     m = 1
     n = m * (q + 2)
-    A = - tril(ones(T, n, n))
+    A = -tril(ones(T, n, n))
     B = ones(T, n, m)
     @test_nowarn exp_and_gram(A, B, method)
 

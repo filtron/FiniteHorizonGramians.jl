@@ -9,13 +9,14 @@ using .ErrorAnalysis, MakieCore, CairoMakie, LaTeXStrings, TuePlots
 
 function main()
 
-    # compute maximal norm of 2^(-s)A such that sup_t |V(t, θ)| < 2^(-53)
+    # compute maximal norm of 2^(-s)A such that sup_t |V(t, θ)| < eps(real(PT))/2
     T = BigFloat
-    qs = big.(1:21)
+    PT = Float32
+    qs = big.(1:13)
     order = 150
-    ngrid = 2^7
-    θs = ErrorAnalysis.backward_bound_exp(T, qs, order)
-    ηs = ErrorAnalysis.backward_bound_gram(T, qs, order, ngrid)
+    ngrid = 2^0
+    θs = ErrorAnalysis.backward_bound_exp(PT, T, qs, order)
+    ηs = ErrorAnalysis.backward_bound_gram(PT, T, qs, order, ngrid)
     νs = ErrorAnalysis.pade_analytic_radius.(T, qs)
     ξs = map(zip(qs, θs)) do (q, θ)
         ErrorAnalysis.pade_den_bound(T, q, order, θ)
@@ -44,7 +45,7 @@ function main()
             ceil.(Δs),
             label = LaTeXString("\$\\lceil \\log_2 \\theta - \\log_2\\eta\\rceil\$"),
         )
-        axislegend(ax2, position = :rt)
+        axislegend(ax2, position = :rb)
         fig
     end
 
@@ -53,7 +54,7 @@ function main()
     display(fig)
 
 
-    filename = joinpath(@__DIR__, "backward_bounds.jl")
+    filename = joinpath(@__DIR__, "backward_bounds_$(PT).jl")
     if isfile(filename)
         rm(filename)
     end
@@ -61,9 +62,9 @@ function main()
     file = open(filename, "w")
 
     try
-        println(file, "θs = T" * string(Float64.(θs)))
+        println(file, "θs = T" * string(PT.(θs)))
         println("")
-        println(file, "ηs = T" * string(Float64.(ηs)))
+        println(file, "ηs = T" * string(PT.(ηs)))
     finally
         close(file)
         format(filename)

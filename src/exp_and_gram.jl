@@ -107,8 +107,7 @@ exp_and_gram_chol(
     A::AbstractMatrix{T},
     B::AbstractMatrix{T},
     method::AbstractExpAndGramAlgorithm,
-) where {T<:Number} =
-    exp_and_gram_chol!(similar(A), similar(A), copy(A), copy(B), method)
+) where {T<:Number} = exp_and_gram_chol!(similar(A), similar(A), copy(A), copy(B), method)
 
 exp_and_gram_chol(
     A::AbstractMatrix{T},
