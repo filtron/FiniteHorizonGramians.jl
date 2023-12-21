@@ -478,8 +478,7 @@ function ExpAndGram{T,3}() where {T}
         0.0 0.0 4.47213595499958 0.0
         0.0 0.0 0.0 0.37796447300922725
     ]
-    normtol = real(T)(0.00067)
-    ExpAndGram{T,3,typeof(pade_num),typeof(gramcs)}(pade_num, gramcs, normtol)
+    ExpAndGram{T,3,typeof(pade_num),typeof(gramcs)}(pade_num, gramcs, _normtol(T, Val(3)))
 end
 
 function ExpAndGram{T,5}() where {T}
@@ -492,8 +491,7 @@ function ExpAndGram{T,5}() where {T}
         0.0 0.0 0.0 0.0 6.0 0.0
         0.0 0.0 0.0 0.0 0.0 0.30151134457776363
     ]
-    normtol = real(T)(0.021)
-    ExpAndGram{T,5,typeof(pade_num),typeof(gramcs)}(pade_num, gramcs, normtol)
+    ExpAndGram{T,5,typeof(pade_num),typeof(gramcs)}(pade_num, gramcs, _normtol(T, Val(5)))
 end
 
 function ExpAndGram{T,7}() where {T}
@@ -508,8 +506,7 @@ function ExpAndGram{T,7}() where {T}
         0.0 0.0 0.0 0.0 0.0 0.0 7.211102550927978 0.0
         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.25819888974716115
     ]
-    normtol = real(T)(0.13)
-    ExpAndGram{T,7,typeof(pade_num),typeof(gramcs)}(pade_num, gramcs, normtol)
+    ExpAndGram{T,7,typeof(pade_num),typeof(gramcs)}(pade_num, gramcs, _normtol(T, Val(7)))
 end
 
 function ExpAndGram{T,9}() where {T}
@@ -537,8 +534,7 @@ function ExpAndGram{T,9}() where {T}
         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 8.246211251235321 0.0
         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.22941573387056177
     ]
-    normtol = real(T)(0.41)
-    ExpAndGram{T,9,typeof(pade_num),typeof(gramcs)}(pade_num, gramcs, normtol)
+    ExpAndGram{T,9,typeof(pade_num),typeof(gramcs)}(pade_num, gramcs, _normtol(T, Val(9)))
 end
 
 function ExpAndGram{T,13}() where {T}
@@ -574,6 +570,5 @@ function ExpAndGram{T,13}() where {T}
         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 10.0 0.0
         0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.19245008972987526
     ]
-    normtol = real(T)(1.57)
-    ExpAndGram{T,13,typeof(pade_num),typeof(gramcs)}(pade_num, gramcs, normtol)
+    ExpAndGram{T,13,typeof(pade_num),typeof(gramcs)}(pade_num, gramcs, _normtol(T, Val(13)))
 end

@@ -5,6 +5,7 @@ using PrecompileTools
 using SimpleUnPack
 
 include("utils.jl")
+include("normtols.jl")
 
 abstract type AbstractExpAndGramAlgorithm end
 
