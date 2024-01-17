@@ -5,16 +5,16 @@
 [![Build Status](https://github.com/filtron/FiniteHorizonGramians.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/filtron/FiniteHorizonGramians.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/filtron/FiniteHorizonGramians.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/filtron/FiniteHorizonGramians.jl)
 
-## Introduction 
+## Introduction
 
-Associated with the pair of matrices $A \in \mathbb{R}^{n \times n}$ and $B \in \mathbb{R}^{n \times m}$ is the differential Lyapunov equation: 
+Associated with the pair of matrices $A \in \mathbb{R}^{n \times n}$ and $B \in \mathbb{R}^{n \times m}$ is the differential Lyapunov equation:
 
 $$
 \dot{Q}(\tau) = A Q(\tau) + Q(\tau) A^* + B B^*, \quad Q(0) = 0,\quad \tau \in [0, t].
 $$
 
-$Q(t)$ is the finite Horizon controllability Gramian of $(A, B)$, over the interval $[0, t]$, 
-and may be equivalently expressed by the function $Q(t) = G(At, B \sqrt{t})$, where 
+$Q(t)$ is the finite Horizon controllability Gramian of $(A, B)$, over the interval $[0, t]$,
+and may be equivalently expressed by the function $Q(t) = G(At, B \sqrt{t})$, where
 
 $$
 G(A, B) = \int_0^1 e^{A t} B B^* e^{A^* t} \mathrm{d} t.
@@ -45,7 +45,7 @@ This is useful for instance in so called array implementations of Gauss-Markov r
 ## Installation
 
 ```julia
-] FiniteHorizonGramians
+] add FiniteHorizonGramians
 ```
 
 ## Basic usage
