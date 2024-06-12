@@ -252,10 +252,18 @@ function _exp_and_gram_chol_init!(
     copy!(P, A2)
 
     # odd = pade_num[2] * I + pade_num[4] * P
-    mul!(odd, pade_num[2], I)
+    # mul!(odd, pade_num[2], I)
+    odd .= 0
+    for i in 1:n
+        odd[i,i] = pade_num[2]
+    end
     mul!(odd, pade_num[4], P, true, true)
     # even = pade_num[1] * I + pade_num[3] * P
-    mul!(even, pade_num[1], I)
+    # mul!(even, pade_num[1], I)
+    even .= 0
+    for i in 1:n
+        even[i,i] = pade_num[1]
+    end
     mul!(even, pade_num[3], P, true, true)
 
     Leven = view(L, :, 1:m*ncoeffhalf)
@@ -312,7 +320,8 @@ function _exp_and_gram_chol_init!(
     ldiv!(F, eA)
     ldiv!(F, L)
 
-    thinU = qr!(L').R # right Cholesky factor of the Grammian (may not be square!!)
+    # thinU = qr!(L').R # right Cholesky factor of the Grammian (may not be square!!)
+    thinU = lq!(L).L'
     thinU = triu2cholesky_factor!(thinU)
 
     fill!(U, zero(eltype(U)))
@@ -344,13 +353,19 @@ function _exp_and_gram_chol_init!(
 
     @. odd = pade_num[14] * A6 + pade_num[12] * A4 + pade_num[10] * A2
     @. even = pade_num[8] * A6 + pade_num[6] * A4 + pade_num[4] * A2
-    mul!(even, true, pade_num[2] * I, true, true)
+    # mul!(even, true, pade_num[2] * I, true, true)
+    for i in 1:n
+        even[i,i] += pade_num[2]
+    end
     mul!(even, A6, odd, true, true)
     mul!(odd, A, even)
 
     @. eA = pade_num[13] * A6 + pade_num[11] * A4 + pade_num[9] * A2
     @. even = pade_num[7] * A6 + pade_num[5] * A4 + pade_num[3] * A2
-    mul!(even, true, pade_num[1] * I, true, true)
+    # mul!(even, true, pade_num[1] * I, true, true)
+    for i in 1:n
+        even[i,i] += pade_num[1]
+    end
     mul!(even, A6, eA, true, true)
 
     @. eA = even + odd # numerator
@@ -459,7 +474,8 @@ function _exp_and_gram_chol_init!(
     ldiv!(F, eA)
     ldiv!(F, L)
 
-    thinU = qr!(L').R # right Cholesky factor of the Grammian (may not be square!!)
+    # thinU = qr!(L').R # right Cholesky factor of the Grammian (may not be square!!)
+    thinU = lq!(L).L'
     thinU = triu2cholesky_factor!(thinU)
 
     fill!(U, zero(eltype(U)))
