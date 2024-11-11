@@ -48,6 +48,22 @@ function FHG.exp_and_gram(
     return Φ, G
 end
 
+
+"""
+    error_ub(A::AbstractMatrix{T}, B::AbstractMatrix{T})
+
+
+Computes an error estimate of the computed Gramian from the relative condition number.
+"""
+function error_ub(A, B)
+    T = promote_type(eltype(A), eltype(B))
+    R = real(T)
+    u = eps(R) / R(2) # unit round off
+    err = gramcond(A, B) * u
+    return err
+end
+
+
 abstract type AbstractExperiment end
 
 
@@ -100,24 +116,30 @@ function integrator_exp_and_gram(T, ndiff)
 end
 
 function run_experiment(e::IntegratorExperiment)
-    alg = AdaptiveExpAndGram{Float64}()
+    T = Float64
+    alg = AdaptiveExpAndGram{T}()
     itr = 1:e.maxn
 
-    relerrs_G = zeros(BigFloat, length(itr))
-    relerrs_U = zeros(BigFloat, length(itr))
-
+    relerrs_G = zeros(T, length(itr))
+    relerrs_U = zeros(T, length(itr))
+    relerr_ub = zeros(T, length(itr))
     for (i, ndiff) in pairs(itr)
-        Araw, Braw = integrator2AB(Float64, ndiff)
+        Araw, Braw = integrator2AB(T, ndiff)
 
         _, G_gt = integrator_exp_and_gram(BigFloat, big(ndiff))
         _, G = exp_and_gram(Araw, Braw, alg)
-        relerrs_G[i] = opnorm(G - G_gt, 1) / opnorm(G_gt, 1)
+
 
         _, U_gt = integrator_exp_and_gram_chol(BigFloat, big(ndiff))
         _, U = exp_and_gram_chol(Araw, Braw, alg)
-        relerrs_U[i] = opnorm(U - U_gt, 1) / opnorm(U_gt, 1)
+
+        G_gt = T.(G_gt)
+        U_gt = T.(U_gt)
+        relerrs_G[i] = opnorm(G - G_gt, 2) / opnorm(G_gt, 2)
+        relerrs_U[i] = opnorm(U - U_gt, 2) / opnorm(U_gt, 2)
+        relerr_ub[i] = error_ub(Araw, Braw)
     end
-    return relerrs_G, relerrs_U
+    return relerrs_G, relerrs_U, relerr_ub
 end
 
 
@@ -153,20 +175,25 @@ end
 export MatrixDepotBuiltIn
 
 function run_experiment(rng::AbstractRNG, e::MatrixDepotBuiltIn)
+    T = Float64
     alg_gt = MatrixFraction()
-    alg = AdaptiveExpAndGram{Float64}()
+    alg = AdaptiveExpAndGram{T}()
 
-    relerrs = zeros(BigFloat, length(e.names))
+    relerrs = zeros(T, length(e.names))
+    relerr_ub = zeros(T, length(e.names))
     for (i, name) in pairs(e.names)
         Araw, Braw = Matrix(matrixdepot(name, e.n)), randn(rng, e.n, e.m)
-        A, B = big.(Matrix(Araw)), big.(Braw)
+        Braw = Braw / opnorm(Braw, 2)
+        A, B = big.(Araw), big.(Braw)
 
         _, G_gt = exp_and_gram(A, B, alg_gt)
         _, G = exp_and_gram(Araw, Braw, alg)
 
-        relerrs[i] = opnorm(G - G_gt, 1) / opnorm(G_gt, 1)
+        G_gt = T.(G_gt)
+        relerrs[i] = opnorm(G - G_gt, 2) / opnorm(G_gt, 2)
+        relerr_ub[i] = error_ub(Araw, Braw)
     end
-    return relerrs
+    return relerrs, relerr_ub
 end
 
 run_experiment(e::MatrixDepotBuiltIn) = run_experiment(Random.default_rng(), e)
@@ -191,20 +218,31 @@ function balancedssm_exp_and_gram(A::AbstractMatrix{T}) where {T}
     Φ = exponential!(A, method, cache)
     G = I - Φ * Φ'
     FHG._symmetrize!(G)
-    return G
+    return Φ, G
+end
+
+function lyap_residual(A, B, eA, G)
+    eAB = eA * B
+    res = A * G + G * adjoint(A) + (B * adjoint(B) - eAB * adjoint(eAB))
+    return res
 end
 
 function run_experiment(e::LaguerreExperiment)
-    #alg = LegendreExpAndGram()
-    alg = AdaptiveExpAndGram{Float64}()
-    relerrs = zeros(BigFloat, e.maxn)
+    T = Float64
+    alg = AdaptiveExpAndGram{T}()
+    relerrs = zeros(T, e.maxn)
+    relerr_ub = zeros(T, e.maxn)
     for i = 1:e.maxn
         Araw, Braw = laguerre2AB(e.λ, i)
-        G_gt = balancedssm_exp_and_gram(big.(Araw))
-        _, G = exp_and_gram(Araw, Braw, alg)
-        relerrs[i] = opnorm(G - G_gt, 1) / opnorm(G_gt, 1)
+        eA_gt, G_gt = balancedssm_exp_and_gram(big.(Araw))
+        eA, G = exp_and_gram(Araw, Braw, alg)
+
+
+        G_gt = T.(G_gt)
+        relerrs[i] = opnorm(G - G_gt, 2) / opnorm(G_gt, 2)
+        relerr_ub[i] = error_ub(Araw, Braw)
     end
-    return relerrs
+    return relerrs, relerr_ub
 end
 
 

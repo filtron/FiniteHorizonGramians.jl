@@ -1,4 +1,4 @@
-# activates the script environment and instantiates it 
+# activates the script environment and instantiates it
 import Pkg
 Base.active_project() != joinpath(@__DIR__, "Project.toml") && Pkg.activate(@__DIR__)
 haskey(Pkg.project().dependencies, "FiniteHorizonGramians") ||
@@ -37,11 +37,18 @@ function main()
             foreach(results) do result
                 scatter!(
                     ax,
-                    eachindex(result),
-                    result,
+                    eachindex(result[1]),
+                    result[1],
                     color = "black",
                     alpha = α,
                     markersize = 3,
+                )
+                lines!(
+                    ax,
+                    eachindex(result[2]),
+                    result[2],
+                    color = "black";
+                    linestyle = :dash,
                 )
                 i == 1 || hideydecorations!(ax; grid = false)
             end

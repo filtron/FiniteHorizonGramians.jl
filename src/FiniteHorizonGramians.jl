@@ -87,6 +87,21 @@ include("exp_and_gram.jl")
 include("adaptive_exp_and_gram.jl")
 export ExpAndGram, AdaptiveExpAndGram
 
+"""
+    gramcond(A, B)
+
+Computes an estimate of the condition number of the controllability Gramian of (A, B) on the interval [0, 1] with respect to the 2-norm.
+"""
+function gramcond(A, B)
+    T = promote_type(eltype(A), eltype(B))
+    R = real(T)
+    gcond = R(2) * (one(R) + one(R) / opnorm(B, 2)) * (opnorm(A, 2) + opnorm(B, 2))
+    return gcond
+end
+
+export gramcond
+
+
 include("precompile.jl")
 
 end

@@ -148,6 +148,7 @@ function exp_and_gram_chol!(
 
     n, m = _dims_if_compatible(A::AbstractMatrix, B::AbstractMatrix) # first checks that (A, B) have compatible dimensions
     normA = opnorm(At, 1)
+
     sexp = log2(normA / method.normtol) # power required for accuracy of exp
     sgram = n <= q + 1 ? 0 : ceil(Int, log2((n - 1) / q)) # power requried for rank equivalence
     s = max(sexp, sgram)

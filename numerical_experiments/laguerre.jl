@@ -1,4 +1,4 @@
-# activates the script environment and instantiates it 
+# activates the script environment and instantiates it
 import Pkg
 Base.active_project() != joinpath(@__DIR__, "Project.toml") && Pkg.activate(@__DIR__)
 haskey(Pkg.project().dependencies, "FiniteHorizonGramians") ||
@@ -12,6 +12,7 @@ using MakieCore, CairoMakie, TuePlots, LaTeXStrings
 
 
 function main()
+
     maxn = 100
     λs = [0.5, 1.5, 5.0]
     experiments = [LaguerreExperiment(λ, maxn) for λ in λs]
@@ -20,7 +21,6 @@ function main()
     setting = standard_setting()
     T = MakieCore.Theme(setting, ncols = length(results), nrows = 1)
 
-
     fig = with_theme(T) do
         fig = Figure()
         ga = fig[1, 1] = GridLayout()
@@ -28,7 +28,8 @@ function main()
         for (i, result) in pairs(results)
             ax = Axis(ga[1, i], yscale = log10, title = LaTeXString("\$ λ = $(λs[i]) \$"))
             axs[i] = ax
-            lines!(ax, eachindex(result), result, color = "black")
+            lines!(ax, eachindex(result[1]), result[1], color = "black")
+            lines!(ax, eachindex(result[2]), result[2], color = "black"; linestyle = :dash)
             i == 1 || hideydecorations!(ax; grid = false)
         end
         linkyaxes!(axs...)

@@ -2,7 +2,7 @@ using LinearAlgebra, SpecialFunctions
 using Test, FiniteHorizonGramians, ExponentialUtilities
 using ForwardDiff, FiniteDiff
 import FiniteHorizonGramians as FHG
-using Aqua, JET
+using Aqua, JET, JuliaFormatter
 
 include("test_utils.jl")
 include("test_initial_approximations.jl")
@@ -43,5 +43,13 @@ numeric_types = (Float32, Float64, ComplexF32, ComplexF64)
 
     @testset "Code linting (JET.jl)" begin
         JET.test_package(FiniteHorizonGramians; target_defined_modules = true)
+    end
+
+    @testset "Formatting (JuliaFormatter.jl)" begin
+        @test JuliaFormatter.format(
+            FiniteHorizonGramians;
+            verbose = false,
+            overwrite = false,
+        )
     end
 end

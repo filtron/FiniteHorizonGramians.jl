@@ -71,7 +71,7 @@ function main()
 
         method3 = ExpMethodHigham2005()
         expcache3 = ExponentialUtilities.alloc_mem(A, method3)
-        work_array3 = similar(A, m*n, m)
+        work_array3 = similar(A, m * n, m)
 
         eA, U, G = similar(A), similar(A), similar(A)
         println("\nBenchmark | T = $(T), size(B) = $(size(B))")

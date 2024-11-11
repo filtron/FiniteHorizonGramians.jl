@@ -1,4 +1,4 @@
-# activates the script environment and instantiates it 
+# activates the script environment and instantiates it
 import Pkg
 Base.active_project() != joinpath(@__DIR__, "Project.toml") && Pkg.activate(@__DIR__)
 haskey(Pkg.project().dependencies, "FiniteHorizonGramians") ||
@@ -12,7 +12,7 @@ using MakieCore, CairoMakie, TuePlots, LaTeXStrings
 
 function main()
 
-    nmax = 30
+    nmax = 40
     setting = standard_setting()
     T = MakieCore.Theme(setting, ncols = 2, nrows = 1)
 
@@ -29,6 +29,7 @@ function main()
             title = LaTeXString("\$ \\text{Gramian} \$"),
         )
         lines!(axleft, results[1], color = "black")
+        lines!(axleft, results[3], color = "black"; linestyle = :dash)
         axright = Axis(
             ga[1, 2],
             yscale = log10,
