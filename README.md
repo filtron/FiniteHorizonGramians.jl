@@ -36,7 +36,7 @@ $$
 It can be shown that the process $x$ has a transition density given by
 
 $$
-p(t + h, x \mid t, x') = \mathcal{N}\big(x; e^{A h} x', G(A h, \sqrt{h} B) \big).
+p(t + h, x \mid t, x') = \mathcal{N} \(x; e^{A h} x', G(A h, \sqrt{h} B) \).
 $$
 
 This package offers a method to both compute the transition matrix $e^{A h}$ and a Cholesky factor of $G(A h, \sqrt{h} B)$ in a numerically robust way.
