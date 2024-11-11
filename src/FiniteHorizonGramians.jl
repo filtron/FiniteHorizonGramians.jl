@@ -14,8 +14,8 @@ export AbstractExpAndGramAlgorithm
 """
     exp_and_gram(
         A::AbstractMatrix{T},
-        B::AbstractMatrix{T},
-        t::Number,
+        B::AbstractVecOrMat{T},
+        [t::Number],
         method::AbstractExpAndGramAlgorithm,
     )
 
@@ -27,7 +27,7 @@ function exp_and_gram end
 """
     exp_and_gram_chol(
         A::AbstractMatrix{T},
-        B::AbstractMatrix{T},
+        B::AbstractVecOrMat{T},
         [t::Number],
         method::AbstractExpAndGramAlgorithm,
     )
@@ -42,8 +42,8 @@ function exp_and_gram_chol end
         eA::AbstractMatrix{T},
         G::AbstractMatrix{T},
         A::AbstractMatrix{T},
-        B::AbstractMatrix{T},
-        t::Number,
+        B::AbstractVecOrMat{T},
+        [t::Number],
         method::AbstractExpAndGramAlgorithm,
         cache = alloc_mem(A, B, method),
     )
@@ -59,7 +59,7 @@ function exp_and_gram! end
         eA::AbstractMatrix{T},
         U::AbstractMatrix{T},
         A::AbstractMatrix{T},
-        B::AbstractMatrix{T},
+        B::AbstractVecOrMat{T},
         [t::Number],
         method::ExpAndGram{T,q},
         [cache = alloc_mem(A, B, method)],
@@ -69,7 +69,7 @@ function exp_and_gram! end
         eA::AbstractMatrix{T},
         U::AbstractMatrix{T},
         A::AbstractMatrix{T},
-        B::AbstractMatrix{T},
+        B::AbstractVecOrMat{T},
         [t::Number],
         method::AdaptiveExpAndGram,
         [cache = nothing],
