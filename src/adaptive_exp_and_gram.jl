@@ -22,6 +22,8 @@ function AdaptiveExpAndGram{T}() where {T}
 end
 
 alloc_mem(A, B, method::AdaptiveExpAndGram) = nothing
+alloc_mem(A, B::AbstractVector, alg::AdaptiveExpAndGram) = nothing # needed to disambiguate
+
 
 function exp_and_gram_chol!(
     eA::AbstractMatrix{T},
@@ -32,7 +34,7 @@ function exp_and_gram_chol!(
     method::AdaptiveExpAndGram,
     cache = nothing,
 ) where {T<:Number}
-    n, _ = _dims_if_compatible(A::AbstractMatrix, B::AbstractMatrix)
+    n, _ = _dims_if_compatible(A, B)
 
     At = A * T(t)
     Bt = B * T(sqrt(t))

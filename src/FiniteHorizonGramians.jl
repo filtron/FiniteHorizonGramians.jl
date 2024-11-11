@@ -14,8 +14,8 @@ export AbstractExpAndGramAlgorithm
 """
     exp_and_gram(
         A::AbstractMatrix{T},
-        B::AbstractMatrix{T},
-        t::Number,
+        B::AbstractVecOrMat{T},
+        [t::Number],
         method::AbstractExpAndGramAlgorithm,
     )
 
@@ -27,7 +27,7 @@ function exp_and_gram end
 """
     exp_and_gram_chol(
         A::AbstractMatrix{T},
-        B::AbstractMatrix{T},
+        B::AbstractVecOrMat{T},
         [t::Number],
         method::AbstractExpAndGramAlgorithm,
     )
@@ -42,8 +42,8 @@ function exp_and_gram_chol end
         eA::AbstractMatrix{T},
         G::AbstractMatrix{T},
         A::AbstractMatrix{T},
-        B::AbstractMatrix{T},
-        t::Number,
+        B::AbstractVecOrMat{T},
+        [t::Number],
         method::AbstractExpAndGramAlgorithm,
         cache = alloc_mem(A, B, method),
     )
@@ -59,7 +59,7 @@ function exp_and_gram! end
         eA::AbstractMatrix{T},
         U::AbstractMatrix{T},
         A::AbstractMatrix{T},
-        B::AbstractMatrix{T},
+        B::AbstractVecOrMat{T},
         [t::Number],
         method::ExpAndGram{T,q},
         [cache = alloc_mem(A, B, method)],
@@ -69,7 +69,7 @@ function exp_and_gram! end
         eA::AbstractMatrix{T},
         U::AbstractMatrix{T},
         A::AbstractMatrix{T},
-        B::AbstractMatrix{T},
+        B::AbstractVecOrMat{T},
         [t::Number],
         method::AdaptiveExpAndGram,
         [cache = nothing],
@@ -92,12 +92,15 @@ export ExpAndGram, AdaptiveExpAndGram
 
 Computes an estimate of the condition number of the controllability Gramian of (A, B) on the interval [0, 1] with respect to the 2-norm.
 """
-function gramcond(A, B)
+function gramcond(A::AbstractMatrix, B::AbstractMatrix)
     T = promote_type(eltype(A), eltype(B))
     R = real(T)
     gcond = R(2) * (one(R) + one(R) / opnorm(B, 2)) * (opnorm(A, 2) + opnorm(B, 2))
     return gcond
 end
+
+gramcond(A::AbstractMatrix, B::AbstractVector) = gramcond(A, reshape(B, length(B), 1))
+
 
 export gramcond
 

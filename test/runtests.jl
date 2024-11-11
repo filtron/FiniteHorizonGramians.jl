@@ -8,6 +8,7 @@ include("test_utils.jl")
 include("test_initial_approximations.jl")
 include("test_exp_and_gram.jl")
 include("test_adaptive_exp_and_gram.jl")
+include("test_vector_valued_B.jl")
 include("test_autodiff.jl")
 
 numeric_types = (Float32, Float64, ComplexF32, ComplexF64)
@@ -26,11 +27,20 @@ numeric_types = (Float32, Float64, ComplexF32, ComplexF64)
         end
     end
 
-
     @testset "adaptive algorithm" begin
         for T in numeric_types
             test_adaptive_exp_and_gram(T)
         end
+    end
+
+    @testset "vector-valued B" begin
+        for T in numeric_types
+            test_vector_valued_B(T)
+        end
+    end
+
+    @testset "gramcond" begin
+        include("test_gramcond.jl")
     end
 
     @testset "autodiff" begin

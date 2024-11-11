@@ -18,7 +18,7 @@ end
 
 function exp_and_gram(
     A::AbstractMatrix{T},
-    B::AbstractMatrix{T},
+    B::AbstractVecOrMat{T},
     method::AbstractExpAndGramAlgorithm,
 ) where {T<:Number}
     return exp_and_gram!(similar(A), similar(A), copy(A), copy(B), method)
@@ -26,7 +26,7 @@ end
 
 function exp_and_gram(
     A::AbstractMatrix{T},
-    B::AbstractMatrix{T},
+    B::AbstractVecOrMat{T},
     t::Number,
     method::AbstractExpAndGramAlgorithm,
 ) where {T<:Number}
@@ -38,7 +38,7 @@ end
 
 Computes a cache for repeated computations with the same input arguments (A, B).
 """
-function alloc_mem(A, B, ::ExpAndGram{T,q}) where {T,q}
+function alloc_mem(A, B::AbstractMatrix, ::ExpAndGram{T,q}) where {T,q}
     n, m = size(B)
     return (
         pre_array = similar(A, 2n, n),
@@ -50,7 +50,8 @@ function alloc_mem(A, B, ::ExpAndGram{T,q}) where {T,q}
         L = zeros(eltype(A), n, m * (q + 1)),
     )
 end
-function alloc_mem(A, B, ::ExpAndGram{T,13}) where {T}
+
+function alloc_mem(A, B::AbstractMatrix, ::ExpAndGram{T,13}) where {T}
     q = 13
     n, m = size(B)
     return (
@@ -70,11 +71,16 @@ function alloc_mem(A, B, ::ExpAndGram{T,13}) where {T}
     )
 end
 
+alloc_mem(A, B::AbstractVector, alg::AbstractExpAndGramAlgorithm) =
+    alloc_mem(A, reshape(B, length(B), 1), alg)
+
+
+
 function exp_and_gram!(
     eA::AbstractMatrix{T},
     U::AbstractMatrix{T},
     A::AbstractMatrix{T},
-    B::AbstractMatrix{T},
+    B::AbstractVecOrMat{T},
     method::AbstractExpAndGramAlgorithm,
     cache = alloc_mem(A, B, method),
 ) where {T<:Number}
@@ -89,7 +95,7 @@ function exp_and_gram!(
     eA::AbstractMatrix{T},
     U::AbstractMatrix{T},
     A::AbstractMatrix{T},
-    B::AbstractMatrix{T},
+    B::AbstractVecOrMat{T},
     t::Number,
     method::AbstractExpAndGramAlgorithm,
     cache = alloc_mem(A, B, method),
@@ -105,13 +111,13 @@ end
 
 exp_and_gram_chol(
     A::AbstractMatrix{T},
-    B::AbstractMatrix{T},
+    B::AbstractVecOrMat{T},
     method::AbstractExpAndGramAlgorithm,
 ) where {T<:Number} = exp_and_gram_chol!(similar(A), similar(A), copy(A), copy(B), method)
 
 exp_and_gram_chol(
     A::AbstractMatrix{T},
-    B::AbstractMatrix{T},
+    B::AbstractVecOrMat{T},
     t::Number,
     method::AbstractExpAndGramAlgorithm,
 ) where {T<:Number} =
@@ -123,7 +129,7 @@ function exp_and_gram_chol!(
     eA::AbstractMatrix{T},
     U::AbstractMatrix{T},
     A::AbstractMatrix{T},
-    B::AbstractMatrix{T},
+    B::AbstractVecOrMat{T},
     method::AbstractExpAndGramAlgorithm,
     cache = alloc_mem(A, B, method),
 ) where {T<:Number}
@@ -146,7 +152,7 @@ function exp_and_gram_chol!(
         (mul!(cache.At, A, t), mul!(cache.Bt, B, sqrt(t)))
     end
 
-    n, m = _dims_if_compatible(A::AbstractMatrix, B::AbstractMatrix) # first checks that (A, B) have compatible dimensions
+    n, m = _dims_if_compatible(A, B) # first checks that (A, B) have compatible dimensions
     normA = opnorm(At, 1)
 
     sexp = log2(normA / method.normtol) # power required for accuracy of exp
@@ -171,6 +177,17 @@ function exp_and_gram_chol!(
     triu2cholesky_factor!(U)
     return eA, U
 end
+
+exp_and_gram_chol!(
+    eA::AbstractMatrix{T},
+    U::AbstractMatrix{T},
+    A::AbstractMatrix{T},
+    B::AbstractVector{T},
+    t::Number,
+    method::AbstractExpAndGramAlgorithm,
+    cache = alloc_mem(A, B, method),
+) where {T<:Number} =
+    exp_and_gram_chol!(eA, U, A, reshape(B, length(B), 1), t, method, cache)
 
 
 """
@@ -239,7 +256,7 @@ function _exp_and_gram_chol_init!(
 ) where {T,q}
     @unpack L, tmpA, odd, even = cache
 
-    n, m = _dims_if_compatible(A::AbstractMatrix, B::AbstractMatrix) # first checks that (A, B) have compatible dimensions
+    n, m = _dims_if_compatible(A, B) # first checks that (A, B) have compatible dimensions
     isodd(q) || throw(DomainError(q, "The degree $(q) must be odd")) # code heavily assumes odd degree expansion
 
     # fetch expansion coefficients
@@ -332,7 +349,7 @@ function _exp_and_gram_chol_init!(
 ) where {T}
     @unpack A2, A4, A6, odd, even, L, tmpB2, A2B, A4B, A6B = cache
 
-    n, m = _dims_if_compatible(A::AbstractMatrix, B::AbstractMatrix) # first checks that (A, B) have compatible dimensions
+    n, m = _dims_if_compatible(A, B) # first checks that (A, B) have compatible dimensions
 
     # fetch expansion coefficients
     pade_num = method.pade_num
