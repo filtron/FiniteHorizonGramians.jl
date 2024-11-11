@@ -19,4 +19,5 @@ exp_and_gram
 exp_and_gram_chol
 exp_and_gram!
 exp_and_gram_chol!
+gramcond
 ```
