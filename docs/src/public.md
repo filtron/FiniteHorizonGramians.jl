@@ -8,7 +8,7 @@ ExpAndGram{T,N,A,B,C}
 ## Create cache
 
 ```@docs
-FiniteHorizonGramians.alloc_mem(A, B, ::ExpAndGram{T,q}) where {T,q}
+FiniteHorizonGramians.alloc_mem(A, B::AbstractMatrix, ::ExpAndGram{T,q}) where {T,q}
 ```
 
 

@@ -39,6 +39,10 @@ numeric_types = (Float32, Float64, ComplexF32, ComplexF64)
         end
     end
 
+    @testset "gramcond" begin
+        include("test_gramcond.jl")
+    end
+
     @testset "autodiff" begin
         test_ForwardDiff()
     end
