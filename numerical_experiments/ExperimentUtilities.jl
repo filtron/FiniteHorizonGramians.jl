@@ -55,6 +55,7 @@ end
 
 Computes an error estimate of the computed Gramian from the relative condition number.
 """
+#=
 function error_ub(A, B)
     T = promote_type(eltype(A), eltype(B))
     R = real(T)
@@ -62,6 +63,16 @@ function error_ub(A, B)
     err = gramcond(A, B) * u
     return err
 end
+=#
+
+function error_ub(A, B)
+    T = promote_type(eltype(A), eltype(B))
+    R = real(T)
+    u = eps(R) / R(2) # unit round off
+    err = 2 * (u * opnorm(A, 2) - log(1 - u))
+    return err
+end
+
 
 
 abstract type AbstractExperiment end
