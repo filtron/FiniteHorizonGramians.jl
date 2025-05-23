@@ -13,12 +13,12 @@ function compute_numerator(z, q::Integer)
     for j = 0:q
         den = den + factorial(2q - j) // factorial(q - j) * z^j // factorial(j)
     end
-    #den = den * factorial(q) // factorial(2q) to get the usual Pade numerator 
+    #den = den * factorial(q) // factorial(2q) to get the usual Pade numerator
     return den
 end
 
 """
-    compute_denominator(z, q::Integer) 
+    compute_denominator(z, q::Integer)
 
 Computes the denominator polynomial for the qth diagonal Pade approximation of the exponential function
 """
@@ -28,7 +28,7 @@ compute_denominator(z, q::Integer) = compute_numerator(-z, q::Integer)
     compute_legendre_numerators(z, q::Integer)
 
 Computes the numerators of the coefficients of the qth order Legendre expansion of the exponential function
-in the variable z. This probably breaks for q < 3.  
+in the variable z. This probably breaks for q < 2 which is not considered anyway.
 """
 function compute_legendre_numerators(z, q::Integer)
 
@@ -39,7 +39,7 @@ function compute_legendre_numerators(z, q::Integer)
     cs[end-1] = 2 * (2q + 1) // z * cs[end]
     cs[end-2] = 2 * (2q - 1) // z * cs[end-1]
 
-    for k = q-3:-1:0
+    for k = (q-3):-1:0
         cs[k+1] = 2 * (2k + 3) / z * cs[k+2] + cs[k+3]
     end
 
@@ -57,7 +57,7 @@ end
 """
     make_coefficient_table(z, q::Integer)
 
-Computes the table of coefficients for the Legendre expansion 
+Computes the table of coefficients for the Legendre expansion
 """
 function compute_coefficient_table(z, q::Integer)
     leg_nums = compute_legendre_numerators(z, q)
@@ -83,7 +83,7 @@ Computes a vector of coefficients for symbolic polinomials in the variable z.
 function poly2coeff(z, poly, deg)
     dict, _ = semipolynomial_form(poly, [z], deg)
     c = zeros(typeof(deg), deg + 1)
-    for n = 1:deg+1
+    for n = 1:(deg+1)
         @inbounds c[n] = haskey(dict, z^(n - 1)) ? dict[z^(n-1)] : 0
     end
     return c

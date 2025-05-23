@@ -58,7 +58,7 @@ function mf_exp_and_gram(A, B, t)
     #post_array = exp(pre_array * t)
     post_array = exponential!(pre_array .* t, method, cache)
     Φ = post_array[1:n, 1:n]
-    G = post_array[1:n, n+1:2n] * Φ'
+    G = post_array[1:n, (n+1):2n] * Φ'
     FHG._symmetrize!(G)
     Φ, G
 end

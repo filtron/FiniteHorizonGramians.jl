@@ -3,15 +3,16 @@ Base.active_project() != joinpath(@__DIR__, "Project.toml") && Pkg.activate(@__D
 isfile(joinpath(@__DIR__, "Manifest.toml")) && Pkg.resolve()
 Pkg.instantiate()
 
+using Revise
 includet("ErrorAnalysis.jl")
 
-using .ErrorAnalysis, MakieCore, CairoMakie, LaTeXStrings, TuePlots
+using .ErrorAnalysis, MakieCore, CairoMakie, LaTeXStrings, TuePlots, JuliaFormatter
 
 function main()
 
     # compute maximal norm of 2^(-s)A such that sup_t |V(t, θ)| < eps(real(PT))/2
     T = BigFloat
-    PT = Float32
+    PT = Float64
     qs = big.(1:13)
     order = 150
     ngrid = 2^0
@@ -50,7 +51,7 @@ function main()
     end
 
     figname = joinpath(FIG_DIR, "bounds.pdf")
-    Makie.save(figname, fig, pt_per_unit = 1.0)
+    save(figname, fig, pt_per_unit = 1.0)
     display(fig)
 
 
@@ -72,4 +73,4 @@ function main()
 
 end
 
-main()
+!isinteractive() && main()

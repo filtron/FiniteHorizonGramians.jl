@@ -42,7 +42,7 @@ function FHG.exp_and_gram(
 
     post_array = exponential!(pre_array, method, cache)
     Φ = post_array[1:n, 1:n]
-    G = post_array[1:n, n+1:2n] * Φ'
+    G = post_array[1:n, (n+1):2n] * Φ'
     FHG._symmetrize!(G)
 
     return Φ, G
