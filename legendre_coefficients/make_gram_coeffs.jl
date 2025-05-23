@@ -3,6 +3,7 @@ Base.active_project() != joinpath(@__DIR__, "Project.toml") && Pkg.activate(@__D
 isfile(joinpath(@__DIR__, "Manifest.toml")) && Pkg.resolve()
 Pkg.instantiate()
 
+using Revise
 includet("LegendreCoefficients.jl")
 using .LegendreCoefficients, LinearAlgebra, Symbolics, JuliaFormatter
 
@@ -29,7 +30,7 @@ function main()
             pade_num = pade_num
             leg_nums = leg_nums
 
-            # compute gram coeffs 
+            # compute gram coeffs
             gram_coeffs = Float64.(leg_nums)
             for row in axes(gram_coeffs, 1)
                 gram_coeffs[row, :] .= gram_coeffs[row, :] / sqrt(sqr_norms[row])

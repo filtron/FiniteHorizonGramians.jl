@@ -17,7 +17,7 @@ end
 """
     pade(q::Integer, θ)
 
-Computes the Pade approximation. 
+Computes the Pade approximation.
 """
 function pade(q::Integer, θ)
     num = pade_den(q, -θ)
@@ -28,8 +28,8 @@ end
 """
     pade_analytic_radius(T, q::Integer)
 
-Computes the maximum radius around origin for which the Pade denominator 
-is analytic. 
+Computes the maximum radius around origin for which the Pade denominator
+is analytic.
 """
 function pade_analytic_radius(T, q::Integer)
     coeff = map(0:q) do j
@@ -42,8 +42,8 @@ end
 """
     pade_den_bound(T, q::Integer, order::Integer, θ)
 
-Computes a norm bound for the inverse of the Pade denominator 
-assuming the argument has norm at most θ. 
+Computes a norm bound for the inverse of the Pade denominator
+assuming the argument has norm at most θ.
 """
 function pade_den_bound(T, q::Integer, order::Integer, θ)
     dθ = Taylor1(T, order)
@@ -56,7 +56,7 @@ end
 """
     BackwardBound{T,A}
 
-Callable struct for computing the backward bound for the matrix exponential. 
+Callable struct for computing the backward bound for the matrix exponential.
 """
 struct BackwardBound{T,A}
     f::A
@@ -77,11 +77,10 @@ end
 """"
     backward_bound_exp(T, qs, order::Integer)
 
-Compute the least norm that guarantees unit roundoff error in 
-the computed matrix exponential. 
+Compute the least norm that guarantees unit roundoff error in
+the computed matrix exponential.
 """
 function backward_bound_exp(PT, T, qs, order::Integer)
-    # twice the result of Higham (2005) is a good upper bound
     if PT <: Float64
         scaling = T(2)
     elseif PT <: Float32
@@ -148,7 +147,7 @@ end
 """
     legzeros(q::Integer, T)
 
-Computes the zeros of the shifted Legendre polynomials. 
+Computes the zeros of the shifted Legendre polynomials.
 """
 function legzeros(q::Integer, T)
     zs = zeros(T, q)
@@ -164,8 +163,8 @@ struct VBound{T<:Number,C}
     function VBound{T}(q::Integer, order::Integer, ngrid::Integer) where {T}
         zs = legzeros(q, T)
 
-        # create dense grid including Legendre zeros 
-        # ngrid might have to be at least 2 for this to not break... 
+        # create dense grid including Legendre zeros
+        # ngrid might have to be at least 2 for this to not break...
         end_points = zs
         pushfirst!(end_points, zero(T))
         push!(end_points, one(T))
@@ -194,10 +193,9 @@ end
 """
     backward_bound_gram(order::Integer)
 
-Computes bounds ηs such that the backward error in G is less than unit roundoff in Float64. 
+Computes bounds ηs such that the backward error in G is less than unit roundoff in Float64.
 """
 function backward_bound_gram(PT, T, qs, order::Integer, ngrid::Integer)
-    # fraction of θs probably good upper bound for ηs 
     unit_roundoff = eps(real(PT)) / 2
     ubs = backward_bound_exp(PT, T, qs, order) / T(1.0)
     ηs = similar(ubs)

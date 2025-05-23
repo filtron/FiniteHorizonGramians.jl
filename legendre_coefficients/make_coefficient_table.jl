@@ -3,7 +3,9 @@ Base.active_project() != joinpath(@__DIR__, "Project.toml") && Pkg.activate(@__D
 isfile(joinpath(@__DIR__, "Manifest.toml")) && Pkg.resolve()
 Pkg.instantiate()
 
+using Revise
 includet("LegendreCoefficients.jl")
+
 using .LegendreCoefficients, LinearAlgebra, Symbolics, JuliaFormatter
 
 

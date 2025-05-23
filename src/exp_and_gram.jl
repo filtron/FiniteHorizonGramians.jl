@@ -216,7 +216,7 @@ function _exp_and_gram_double!(eA, U, s, cache)
     for _ = 1:s
         # form pre-array for doubling of U
         mul!(view(pre_array, 1:n, 1:n), U, eA')
-        pre_array[n+1:2n, 1:n] .= U
+        pre_array[(n+1):2n, 1:n] .= U
 
         # doubling of eA (use U as an intermediate array)
         mul!(U, eA, eA)
@@ -276,8 +276,8 @@ function _exp_and_gram_chol_init!(
     mul!(even, pade_num[1], I)
     mul!(even, pade_num[3], P, true, true)
 
-    Leven = view(L, :, 1:m*ncoeffhalf)
-    Lodd = view(L, :, m*ncoeffhalf+1:m*2*ncoeffhalf)
+    Leven = view(L, :, 1:(m*ncoeffhalf))
+    Lodd = view(L, :, (m*ncoeffhalf+1):(m*2*ncoeffhalf))
 
     # initialize zeroth block
     L0 = view(Leven, 1:n, 1:m)
@@ -290,11 +290,11 @@ function _exp_and_gram_chol_init!(
     mul!(L1, P, B, q < 4 ? false : gram_coeffs[2, 4], gram_coeffs[2, 2])
 
     # initialize second block (contains only A^2)
-    L2 = view(Leven, 1:n, m+1:2m)
+    L2 = view(Leven, 1:n, (m+1):2m)
     mul!(L2, P, B, gram_coeffs[3, 3], true)
 
     # initialize third block (contains only A^3)
-    L3 = view(Lodd, 1:n, m+1:2m)
+    L3 = view(Lodd, 1:n, (m+1):2m)
     mul!(L3, P, B, gram_coeffs[4, 4], true)
 
     for k = 2:(div(length(pade_num), 2)-1)
@@ -303,11 +303,11 @@ function _exp_and_gram_chol_init!(
         mul!(even, pade_num[2k+1], P, true, true)
         mul!(odd, pade_num[2k+2], P, true, true)
 
-        for i = 0:div(q - 1, 2)
-            Leveni = view(Leven, 1:n, i*m+1:(i+1)*m)
+        for i = 0:div(q-1, 2)
+            Leveni = view(Leven, 1:n, (i*m+1):((i+1)*m))
             gram_coeffs[2i+1, 2k+1] != 0 &&
                 mul!(Leveni, P, B, gram_coeffs[2i+1, 2k+1], true)
-            Loddi = view(Lodd, 1:n, i*m+1:(i+1)*m)
+            Loddi = view(Lodd, 1:n, (i*m+1):((i+1)*m))
             gram_coeffs[2i+2, 2k+2] != 0 && mul!(Loddi, P, B, gram_coeffs[2i+2, 2k+2], true)
         end
     end
@@ -320,8 +320,8 @@ function _exp_and_gram_chol_init!(
     @. eA = even + odd # pade numerator
 
     # add factor A to odd parts in L
-    for i = 0:div(q - 1, 2)
-        Loddi = view(Lodd, 1:n, i*m+1:(i+1)*m)
+    for i = 0:div(q-1, 2)
+        Loddi = view(Lodd, 1:n, (i*m+1):((i+1)*m))
         mul!(B, A, Loddi) # can use B as intermediate array as it is part of the cache
         Loddi .= B
     end
@@ -387,40 +387,40 @@ function _exp_and_gram_chol_init!(
     mul!(L0, A6, tmpB2, true, true)
 
     # L2
-    L2 = view(L, 1:n, 2m+1:3m)
+    L2 = view(L, 1:n, (2m+1):3m)
     @. L2 = gram_coeffs[3, 3] * A2B + gram_coeffs[3, 5] * A4B + gram_coeffs[3, 7] * A6B # low order terms
     @. tmpB2 = gram_coeffs[3, 9] * A2B + gram_coeffs[3, 11] * A4B + gram_coeffs[3, 13] * A6B # high order terms bar factor 6
     mul!(L2, A6, tmpB2, true, true)
 
     # L4
-    L4 = view(L, 1:n, 4m+1:5m)
+    L4 = view(L, 1:n, (4m+1):5m)
     @. L4 = gram_coeffs[5, 5] * A4B + gram_coeffs[5, 7] * A6B # low order terms
     @. tmpB2 = gram_coeffs[5, 9] * A2B + gram_coeffs[5, 11] * A4B + gram_coeffs[5, 13] * A6B # high order terms bar factor 6
     mul!(L4, A6, tmpB2, true, true)
 
     # L6
-    L6 = view(L, 1:n, 6m+1:7m)
+    L6 = view(L, 1:n, (6m+1):7m)
     @. L6 = gram_coeffs[7, 7] * A6B # low order terms
     @. tmpB2 = gram_coeffs[7, 9] * A2B + gram_coeffs[7, 11] * A4B + gram_coeffs[7, 13] * A6B # high order terms bar factor 6
     mul!(L6, A6, tmpB2, true, true)
 
     # L8
-    L8 = view(L, 1:n, 8m+1:9m)
+    L8 = view(L, 1:n, (8m+1):9m)
     @. tmpB2 = gram_coeffs[9, 9] * A2B + gram_coeffs[9, 11] * A4B + gram_coeffs[9, 13] * A6B # high order terms bar factor 6
     mul!(L8, A6, tmpB2, true, false)
 
     # L10
-    L10 = view(L, 1:n, 10m+1:11m)
+    L10 = view(L, 1:n, (10m+1):11m)
     @. tmpB2 = gram_coeffs[11, 11] * A4B + gram_coeffs[11, 13] * A6B # high order terms bar factor 6
     mul!(L10, A6, tmpB2, true, false)
 
     # L12
-    L12 = view(L, 1:n, 12m+1:13m)
+    L12 = view(L, 1:n, (12m+1):13m)
     @. tmpB2 = gram_coeffs[11, 13] * A6B # high order terms bar factor 6
     mul!(L12, A6, tmpB2, true, false)
 
     # L1
-    L1 = view(L, 1:n, m+1:2m)
+    L1 = view(L, 1:n, (m+1):2m)
     @. L1 = gram_coeffs[2, 4] * A2B + gram_coeffs[2, 6] * A4B + gram_coeffs[2, 8] * A6B # low order terms
     mul!(L1, gram_coeffs[2, 2] * I, B, true, true) # add constant term in A
     @. tmpB2 = gram_coeffs[2, 10] * A2B + gram_coeffs[2, 12] * A4B # high order terms bar factor 6
@@ -429,7 +429,7 @@ function _exp_and_gram_chol_init!(
     copy!(L1, tmpB2)
 
     # L3
-    L3 = view(L, 1:n, 3m+1:4m)
+    L3 = view(L, 1:n, (3m+1):4m)
     @. L3 = gram_coeffs[4, 4] * A2B + gram_coeffs[4, 6] * A4B + gram_coeffs[4, 8] * A6B # low order terms
     @. tmpB2 = gram_coeffs[4, 10] * A2B + gram_coeffs[4, 12] * A4B # high order terms bar factor 6
     mul!(L3, A6, tmpB2, true, true)
@@ -437,7 +437,7 @@ function _exp_and_gram_chol_init!(
     copy!(L3, tmpB2)
 
     # L5
-    L5 = view(L, 1:n, 5m+1:6m)
+    L5 = view(L, 1:n, (5m+1):6m)
     @. L5 = gram_coeffs[6, 6] * A4B + gram_coeffs[6, 8] * A6B # low order terms
     @. tmpB2 = gram_coeffs[6, 10] * A2B + gram_coeffs[6, 12] * A4B # high order terms bar factor 6
     mul!(L5, A6, tmpB2, true, true)
@@ -445,7 +445,7 @@ function _exp_and_gram_chol_init!(
     copy!(L5, tmpB2)
 
     # L7
-    L7 = view(L, 1:n, 7m+1:8m)
+    L7 = view(L, 1:n, (7m+1):8m)
     @. L7 = gram_coeffs[8, 8] * A6B # low order terms
     @. tmpB2 = gram_coeffs[8, 10] * A2B + gram_coeffs[8, 12] * A4B # high order terms bar factor 6
     mul!(L7, A6, tmpB2, true, true)
@@ -453,21 +453,21 @@ function _exp_and_gram_chol_init!(
     copy!(L7, tmpB2)
 
     # L9
-    L9 = view(L, 1:n, 9m+1:10m)
+    L9 = view(L, 1:n, (9m+1):10m)
     @. tmpB2 = gram_coeffs[10, 10] * A2B + gram_coeffs[10, 12] * A4B # high order terms bar factor 6
     mul!(L9, A6, tmpB2, true, false)
     mul!(tmpB2, A, L9, true, false)
     copy!(L9, tmpB2)
 
     # L11
-    L11 = view(L, 1:n, 11m+1:12m)
+    L11 = view(L, 1:n, (11m+1):12m)
     @. tmpB2 = gram_coeffs[12, 12] * A4B # high order terms bar factor 6
     mul!(L11, A6, tmpB2, true, false)
     mul!(tmpB2, A, L11, true, false)
     copy!(L11, tmpB2)
 
     # L13
-    L13 = view(L, 1:n, 13m+1:14m)
+    L13 = view(L, 1:n, (13m+1):14m)
     @. tmpB2 = gram_coeffs[14, 14] * A6B # high order terms bar factor 6
     mul!(L13, A6, tmpB2, true, false)
     mul!(tmpB2, A, L13, true, false)

@@ -14,13 +14,13 @@ function matrix_fraction!(eA, G, A, B, t, method, expcache, work_array)
     n = LinearAlgebra.checksquare(A)
     @views begin
         work_array[1:n, 1:n] .= A
-        mul!(work_array[1:n, n+1:2n], B, B')
-        work_array[n+1:2n, 1:n] .= zero(eltype(A))
-        work_array[n+1:2n, n+1:2n] .= -A'
+        mul!(work_array[1:n, (n+1):2n], B, B')
+        work_array[(n+1):2n, 1:n] .= zero(eltype(A))
+        work_array[(n+1):2n, (n+1):2n] .= -A'
         work_array .= work_array * t
         W = exponential!(work_array, method, expcache)
         eA .= W[1:n, 1:n]
-        G = mul!(G, W[1:n, n+1:2n], eA')
+        G = mul!(G, W[1:n, (n+1):2n], eA')
     end
     FHG._symmetrize!(G)
     return eA, G
@@ -38,7 +38,7 @@ function quadrature_disc!(eA, U, A, B, t, method, expcache, work_array)
         dt = nodes[i]
         @. eA = A * dt
         exponential!(eA, method, expcache)
-        mul!(view(work_array, (i-1)*n+1:i*n, 1:m), B', eA, sqrt(weights[i]), false)
+        mul!(view(work_array, ((i-1)*n+1):(i*n), 1:m), B', eA, sqrt(weights[i]), false)
     end
 
     # gausslegendre does not include end-point

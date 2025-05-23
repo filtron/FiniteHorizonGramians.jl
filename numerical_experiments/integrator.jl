@@ -6,6 +6,7 @@ haskey(Pkg.project().dependencies, "FiniteHorizonGramians") ||
 isfile(joinpath(@__DIR__, "Manifest.toml")) && Pkg.resolve()
 Pkg.instantiate()
 
+using Revise
 includet("ExperimentUtilities.jl")
 using FiniteHorizonGramians, Random, .ExperimentUtilities
 using MakieCore, CairoMakie, TuePlots, LaTeXStrings
@@ -49,4 +50,4 @@ function main()
     display(fig)
 end
 
-main()
+!isinteractive() && main()
