@@ -120,7 +120,7 @@ linestyles = (:dot, :solid)
 
 λs = (0.5, 1.5, 5.0)
 
-relerrs, err_estimates =  main(ns, λs)
+relerrs, err_estimates = main(ns, λs)
 
 setting = standard_setting()
 T = MakieCore.Theme(setting, ncols = length(λs), nrows = 1)
@@ -131,11 +131,30 @@ fig_err = with_theme(T) do
     axs = Vector{Axis}(undef, length(λs))
     for i in keys(λs)
         ylb = i == 1 ? LaTeXString("error") : ""
-        ax = Axis(ga[1, i], yscale = log10, title = LaTeXString("\$ λ = $(λs[i]) \$"), ylabel = ylb)
+        ax = Axis(
+            ga[1, i],
+            yscale = log10,
+            title = LaTeXString("\$ λ = $(λs[i]) \$"),
+            ylabel = ylb,
+        )
         axs[i] = ax
-        lines!(ax, ns, err_estimates[i, :], color = "black", label = LaTeXString("ERREST"), linestyle = :dash)
+        lines!(
+            ax,
+            ns,
+            err_estimates[i, :],
+            color = "black",
+            label = LaTeXString("ERREST"),
+            linestyle = :dash,
+        )
         i == 1 || hideydecorations!(ax; grid = false)
-            lines!(ax, ns, relerrs[i, :], label = LaTeXString("SS"), linestyle = :solid, color = "black")
+        lines!(
+            ax,
+            ns,
+            relerrs[i, :],
+            label = LaTeXString("SS"),
+            linestyle = :solid,
+            color = "black",
+        )
     end
     linkyaxes!(axs...)
     colgap!(ga, 10)

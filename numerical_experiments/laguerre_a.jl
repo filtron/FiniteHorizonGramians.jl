@@ -135,7 +135,7 @@ linestyles = (:dot, :solid)
 
 λs = (0.5, 1.5, 5.0)
 
-relerrs, ranks, err_estimates =  main(ns, λs, methods)
+relerrs, ranks, err_estimates = main(ns, λs, methods)
 
 setting = standard_setting()
 T = MakieCore.Theme(setting, ncols = length(λs), nrows = 1)
@@ -146,12 +146,31 @@ fig_err = with_theme(T) do
     axs = Vector{Axis}(undef, length(λs))
     for i in keys(λs)
         ylb = i == 1 ? LaTeXString("error") : ""
-        ax = Axis(ga[1, i], yscale = log10, title = LaTeXString("\$ λ = $(λs[i]) \$"), ylabel = ylb)
+        ax = Axis(
+            ga[1, i],
+            yscale = log10,
+            title = LaTeXString("\$ λ = $(λs[i]) \$"),
+            ylabel = ylb,
+        )
         axs[i] = ax
-        lines!(ax, ns, err_estimates[i, :], color = "black", label = LaTeXString("ERREST"), linestyle = :dash)
+        lines!(
+            ax,
+            ns,
+            err_estimates[i, :],
+            color = "black",
+            label = LaTeXString("ERREST"),
+            linestyle = :dash,
+        )
         i == 1 || hideydecorations!(ax; grid = false)
         for j in keys(methods)
-            lines!(ax, ns, relerrs[i, :, j], label = labels[j], linestyle = linestyles[j], color = "black")
+            lines!(
+                ax,
+                ns,
+                relerrs[i, :, j],
+                label = labels[j],
+                linestyle = linestyles[j],
+                color = "black",
+            )
         end
     end
     linkyaxes!(axs...)
@@ -178,8 +197,15 @@ fig_rank = with_theme(T) do
         #lines!(ax, ns, ns, color = "black", label = LaTeXString("max rank"))
         i == 1 || hideydecorations!(ax; grid = false)
         for j in keys(methods)
-           #j != 1 && lines!(ax, ns, ranks[i, :, j], label = labels[j], linestyle = linestyles[j], color = "black")
-           lines!(ax, ns, ns  - ranks[i, :, j], label = labels[j], linestyle = linestyles[j], color = "black")
+            #j != 1 && lines!(ax, ns, ranks[i, :, j], label = labels[j], linestyle = linestyles[j], color = "black")
+            lines!(
+                ax,
+                ns,
+                ns - ranks[i, :, j],
+                label = labels[j],
+                linestyle = linestyles[j],
+                color = "black",
+            )
         end
     end
     linkyaxes!(axs...)
