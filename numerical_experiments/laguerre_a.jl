@@ -26,21 +26,21 @@ end
 
 function lyap_gram(A, B)
     eA = exp(A)
-    eAB = eA*B
-    Q = B*adjoint(B) - eAB*adjoint(eAB)
+    eAB = eA * B
+    Q = B * adjoint(B) - eAB * adjoint(eAB)
     G = lyap(A, Q)
     return G
 end
 
 function eigen_gramchol1(A, B)
     eA = exp(A)
-    eAB = eA*B
-    Q = B*adjoint(B) - eAB*adjoint(eAB)
+    eAB = eA * B
+    Q = B * adjoint(B) - eAB * adjoint(eAB)
     G = lyap(A, Q)
 
     E = eigen(Hermitian(G))
     clipped_eigs = max.(E.values, zero(eltype(E.values)))
-    U = qr(Diagonal(sqrt.(clipped_eigs))*adjoint(E.vectors)).R
+    U = qr(Diagonal(sqrt.(clipped_eigs)) * adjoint(E.vectors)).R
     return U
 end
 
@@ -49,7 +49,7 @@ function eigen_gramchol2(A, B)
 
     E = eigen(Hermitian(G))
     clipped_eigs = max.(E.values, zero(eltype(E.values)))
-    U = qr(Diagonal(sqrt.(clipped_eigs))*adjoint(E.vectors)).R
+    U = qr(Diagonal(sqrt.(clipped_eigs)) * adjoint(E.vectors)).R
     return U
 end
 
@@ -64,13 +64,13 @@ end
 
 function ref_gram(A, B)
     eA = exp(A)
-    G = I - eA*adjoint(eA)
+    G = I - eA * adjoint(eA)
 end
 
 
 function error(G, U)
     any(isnan, U) && return NaN
-    return opnorm(adjoint(U)*U - G, 2) / opnorm(G, 2)
+    return opnorm(adjoint(U) * U - G, 2) / opnorm(G, 2)
 end
 
 function rank_estimate(U, tol)
@@ -79,7 +79,7 @@ function rank_estimate(U, tol)
 end
 
 
-tol = eps(Float64)/2 # all singular values smaller than unit round-off are considered zero
+tol = eps(Float64) / 2 # all singular values smaller than unit round-off are considered zero
 
 function error_estimate(A, B)
     T = promote_type(eltype(A), eltype(B))
@@ -97,8 +97,8 @@ function main(ns, λs, methods)
 
     for (i, λ) in pairs(λs)
         for (j, n) in pairs(ns)
-            A = λ * (I - 2*tril(ones(n, n)))
-            B = sqrt(2*λ) * ones(n, 1)
+            A = λ * (I - 2 * tril(ones(n, n)))
+            B = sqrt(2 * λ) * ones(n, 1)
             G = ref_gram(A, B)
             err_estimates[i, j] = error_estimate(A, B)
             for (k, method) in pairs(methods)
@@ -178,7 +178,7 @@ fig_err = with_theme(T) do
     leg = Legend(fig[1, 2], axs[1], framevisible = false)
     #leg.nbanks = 3
     #leg.tellwidth = false
-    colsize!(fig.layout, 2, Relative(1/5))
+    colsize!(fig.layout, 2, Relative(1 / 5))
     fig
 end
 
@@ -213,7 +213,7 @@ fig_rank = with_theme(T) do
     leg = Legend(fig[1, 2], axs[1], framevisible = false)
     #leg.nbanks = 3
     #leg.tellwidth = false
-    colsize!(fig.layout, 2, Relative(1/5))
+    colsize!(fig.layout, 2, Relative(1 / 5))
     fig
 end
 
