@@ -304,7 +304,7 @@ function _exp_and_gram_chol_init!(
         mul!(even, pade_num[2k+1], P, true, true)
         mul!(odd, pade_num[2k+2], P, true, true)
 
-        for i = 0:div(q - 1, 2)
+        for i = 0:div(q-1, 2)
             Leveni = view(Leven, 1:n, (i*m+1):((i+1)*m))
             gram_coeffs[2i+1, 2k+1] != 0 &&
                 mul!(Leveni, P, B, gram_coeffs[2i+1, 2k+1], true)
@@ -321,7 +321,7 @@ function _exp_and_gram_chol_init!(
     @. eA = even + odd # pade numerator
 
     # add factor A to odd parts in L
-    for i = 0:div(q - 1, 2)
+    for i = 0:div(q-1, 2)
         Loddi = view(Lodd, 1:n, (i*m+1):((i+1)*m))
         mul!(B, A, Loddi) # can use B as intermediate array as it is part of the cache
         Loddi .= B

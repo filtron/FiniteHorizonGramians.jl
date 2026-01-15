@@ -96,7 +96,7 @@ end
 
 tol = eps(Float64) / 2
 λs = (0.5, 1.5, 5.0)
-ns = (1000, 2000, 3000, 4000)
+ns = (1000, 2000, 3000, 4000, 5000)
 
 
 function main(λs, ns, tol)
@@ -121,3 +121,28 @@ function main(λs, ns, tol)
 end
 
 relerrs, ranks, err_estimates = main(λs, ns, tol)
+
+
+#filename = joinpath(@__DIR__, "backward_bounds_$(PT).jl")
+filename = "medium_size_results.jl"
+if isfile(filename)
+    rm(filename)
+end
+
+file = open(filename, "w")
+
+try
+    println(file, "λ = " * string(λs))
+    println("")
+    println(file, "n = " * string(ns))
+    println("")
+    println(file, "relative_errors = " * string(relerrs))
+    println("")
+    println(file, "error_estimates = " * string(err_estimates))
+    println("")
+    println(file, "ranks = " * string(ranks))
+    println("")
+finally
+    close(file)
+    format(filename)
+end

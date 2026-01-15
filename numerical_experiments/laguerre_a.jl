@@ -118,16 +118,16 @@ nmax = 200
 ns = 1:nmax
 
 
-use_eig1 = true
+use_eig1 = false
 
 if use_eig1
     methods = (eigen_gramchol1, ss_gramchol)
-    labels = (LaTeXString("EIG1"), LaTeXString("SS"))
+    labels = (LaTeXString("EIG1"), LaTeXString("SSCHOL"))
     err_fig_name = "laguerre_err1.pdf"
     rank_fig_name = "laguerre_rank1.pdf"
 else
     methods = (eigen_gramchol2, ss_gramchol)
-    labels = (LaTeXString("EIG2"), LaTeXString("SS"))
+    labels = (LaTeXString("EIG2"), LaTeXString("SSCHOL"))
     err_fig_name = "laguerre_err2.pdf"
     rank_fig_name = "laguerre_rank2.pdf"
 end
@@ -137,8 +137,60 @@ linestyles = (:dot, :solid)
 
 relerrs, ranks, err_estimates = main(ns, λs, methods)
 
-setting = standard_setting()
-T = MakieCore.Theme(setting, ncols = length(λs), nrows = 1)
+#setting = standard_setting()
+#T = MakieCore.Theme(setting, ncols = length(λs), nrows = 1)
+
+gr = (5.0^0.5 - 1.0) / 2.0
+ppi = 72.27
+
+#ncols = length(λs)
+ncols = 3
+nrows = 1
+w = 5.867722844887229
+h = w * gr / 3
+figsize = (ppi * w, ppi * h)
+
+font = "San Serif"
+fsz = 11
+mainfsz, smallfsz = fsz - 1, fsz - 2
+T = Makie.Theme(
+    font = font,
+    fontsize = fsz,
+    size = figsize,
+    figure_padding = 5,
+    Axis = (
+        titlefont = font,
+        subtitlefont = font,
+        xlabelfont = font,
+        ylabelfont = font,
+        xticklabelfont = font,
+        yticklabelfont = font,
+        titlesize = mainfsz,
+        subtitlesize = mainfsz,
+        xticklabelsize = smallfsz,
+        yticklabelsize = smallfsz,
+        xlabelsize = mainfsz,
+        ylabelsize = mainfsz,
+        spinewidth = 0.5,
+        xgridwidth = 0.5,
+        ygridwidth = 0.5,
+        xtickwidth = 0.5,
+        ytickwidth = 0.5,
+        xticksize = 2,
+        yticksize = 2,
+    ),
+    Legend = (
+        titlefont = font,
+        labelfont = font,
+        labelsize = mainfsz,
+        framewidth = 0.5,
+        patchsize = (20, 8),
+        padding = (5, 5, 5, 5),
+    ),
+    Label = (font = font, fontsize = smallfsz),
+)
+
+
 
 fig_err = with_theme(T) do
     fig = Figure()
@@ -153,7 +205,7 @@ fig_err = with_theme(T) do
             ylabel = ylb,
         )
         axs[i] = ax
-        lines!(
+        Makie.lines!(
             ax,
             ns,
             err_estimates[i, :],
@@ -163,7 +215,7 @@ fig_err = with_theme(T) do
         )
         i == 1 || hideydecorations!(ax; grid = false)
         for j in keys(methods)
-            lines!(
+            Makie.lines!(
                 ax,
                 ns,
                 relerrs[i, :, j],
@@ -172,6 +224,7 @@ fig_err = with_theme(T) do
                 color = "black",
             )
         end
+        #ax.xticks = [1, 100, 200]
     end
     linkyaxes!(axs...)
     colgap!(ga, 10)
@@ -191,17 +244,17 @@ fig_rank = with_theme(T) do
     ga = fig[1, 1] = GridLayout()
     axs = Vector{Axis}(undef, length(λs))
     for i in keys(λs)
-        ylb = i == 1 ? LaTeXString("rank loss") : ""
+        ylb = i == 1 ? LaTeXString("rank") : ""
         ax = Axis(ga[1, i], title = LaTeXString("\$ λ = $(λs[i]) \$"), ylabel = ylb)
         axs[i] = ax
         #lines!(ax, ns, ns, color = "black", label = LaTeXString("max rank"))
         i == 1 || hideydecorations!(ax; grid = false)
         for j in keys(methods)
             #j != 1 && lines!(ax, ns, ranks[i, :, j], label = labels[j], linestyle = linestyles[j], color = "black")
-            lines!(
+            Makie.lines!(
                 ax,
                 ns,
-                ns - ranks[i, :, j],
+                ranks[i, :, j],
                 label = labels[j],
                 linestyle = linestyles[j],
                 color = "black",
