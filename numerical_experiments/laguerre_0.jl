@@ -187,22 +187,10 @@ fig_err = with_theme(T) do
             ylabel = ylb,
         )
         axs[i] = ax
-        Makie.lines!(
-            ax,
-            ns,
-            err_estimates[i, :],
-            color = "black",
-            linestyle = :dash,
-        )
+        Makie.lines!(ax, ns, err_estimates[i, :], color = "black", linestyle = :dash)
         i == 1 || hideydecorations!(ax; grid = false)
         for j in keys(methods)
-            Makie.lines!(
-                ax,
-                ns,
-                relerrs[i, :],
-                linestyle = :solid,
-                color = "black",
-            )
+            Makie.lines!(ax, ns, relerrs[i, :], linestyle = :solid, color = "black")
         end
         #ax.xticks = [1, 100, 200]
     end
@@ -217,4 +205,3 @@ err_fig_name = "laguerre.pdf"
 figname = joinpath(FIG_DIR, err_fig_name)
 Makie.save(figname, fig_err, pt_per_unit = 1.0)
 display(fig_err)
-
