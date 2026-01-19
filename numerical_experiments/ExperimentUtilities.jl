@@ -55,16 +55,6 @@ end
 
 Computes an error estimate of the computed Gramian from the relative condition number.
 """
-#=
-function error_ub(A, B)
-    T = promote_type(eltype(A), eltype(B))
-    R = real(T)
-    u = eps(R) / R(2) # unit round off
-    err = gramcond(A, B) * u
-    return err
-end
-=#
-
 function error_ub(A, B)
     T = promote_type(eltype(A), eltype(B))
     R = real(T)
@@ -73,7 +63,16 @@ function error_ub(A, B)
     return err
 end
 
+function error_chol_ub(A, B)
+    n = size(B, 1)
+    Cn = 4 * log(n) / π^2 + 1 / 2
 
+    T = promote_type(eltype(A), eltype(B))
+    R = real(T)
+    u = eps(R) / R(2) # unit round off
+    err = 2 * Cn * (u * opnorm(A, 2) - log(1 - u))
+    return err
+end
 
 abstract type AbstractExperiment end
 
@@ -134,6 +133,7 @@ function run_experiment(e::IntegratorExperiment)
     relerrs_G = zeros(T, length(itr))
     relerrs_U = zeros(T, length(itr))
     relerr_ub = zeros(T, length(itr))
+    relerr_chol_ub = zeros(T, length(itr))
     for (i, ndiff) in pairs(itr)
         Araw, Braw = integrator2AB(T, ndiff)
 
@@ -149,8 +149,9 @@ function run_experiment(e::IntegratorExperiment)
         relerrs_G[i] = opnorm(G - G_gt, 2) / opnorm(G_gt, 2)
         relerrs_U[i] = opnorm(U - U_gt, 2) / opnorm(U_gt, 2)
         relerr_ub[i] = error_ub(Araw, Braw)
+        relerr_chol_ub[i] = error_chol_ub(Araw, Braw)
     end
-    return relerrs_G, relerrs_U, relerr_ub
+    return relerrs_G, relerrs_U, relerr_ub, relerr_chol_ub
 end
 
 
